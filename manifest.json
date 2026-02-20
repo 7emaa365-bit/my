@@ -1,0 +1,76 @@
+{
+  "name": "My Order",
+  "short_name": "My Order",
+  "description": "My Order. اطلب وجبتك من أفضل المطاعم بسهولة وبأمان | طوّرها Ibrahim Mohamed",
+  "developer": {
+    "name": "Ibrahim Mohamed",
+    "url": "https://www.instagram.com/ibra7im_mo7amad?igsh=N3oyZWxubDA2YTYw",
+    "linkedin": "https://www.linkedin.com/in/ibra7im-mo7amed?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app",
+    "email": "ibra7im.engineer@gmail.com"
+  },
+  "start_url": "index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B35",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "shopping"],
+  "screenshots": [
+    {
+      "src": "https://images.unsplash.com/photo-1504674900152-b8b3e3640da7?w=540&h=720",
+      "sizes": "540x720",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "تصفح المنيو",
+      "short_name": "المنيو",
+      "description": "اطلع على قائمة الطعام الكاملة",
+      "url": "/?action=menu",
+      "icons": [
+        {
+          "src": "https://images.unsplash.com/photo-1495098861352-c017b8532557?w=192&h=192",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "طلباتي",
+      "short_name": "الطلبات",
+      "description": "عرض سجل الطلبات السابقة",
+      "url": "/?action=orders",
+      "icons": [
+        {
+          "src": "https://images.unsplash.com/photo-1563720223185-11003397e860?w=192&h=192",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

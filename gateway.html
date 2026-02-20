@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>بوابة المطاعم — My Order</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      crossorigin="anonymous"
+    />
+    <style>
+      .gateway-hero {
+        padding: 40px 8%;
+        text-align: center;
+      }
+      .restaurants-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        padding: 24px 8%;
+      }
+      .restaurant-card {
+        background: linear-gradient(180deg, #fff, #fff);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+        text-align: center;
+        transition:
+          transform 0.28s ease,
+          box-shadow 0.28s ease;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+      .restaurant-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.12);
+      }
+      .restaurant-logo {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 12px;
+      }
+      .restaurant-name {
+        font-weight: 800;
+        font-size: 18px;
+        color: var(--gray-800);
+      }
+    </style>
+  </head>
+  <body>
+    <header
+      style="
+        padding: 16px 8%;
+        background: linear-gradient(135deg, #0f1419, #162447);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        "
+      >
+        <div
+          style="
+            font-weight: 900;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          "
+        >
+          <i class="fa-solid fa-utensils"></i> بوابة المطاعم
+        </div>
+        <a
+          href="index.html"
+          style="
+            background: linear-gradient(135deg, #ff6b35, #ff8e5f);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+          "
+          >العودة للموقع</a
+        >
+      </div>
+    </header>
+
+    <main>
+      <section class="gateway-hero">
+        <h1 style="font-size: 34px; margin-bottom: 6px">اختر فرعك للبدء</h1>
+        <p style="color: #6b7280; margin-bottom: 18px">
+          بوابة اختيار المطعم السهلة — انقر على أي بطاقة للانتقال إلى صفحة
+          المطعم
+        </p>
+      </section>
+
+      <section class="restaurants-grid">
+        <a
+          class="restaurant-card"
+          href="index.html?res=%D9%85%D8%B7%D8%B9%D9%85+%D8%A7%D9%84%D8%A8%D9%8A%D8%AA%D8%B2%D8%A7+%D8%A7%D9%84%D8%A5%D9%8A%D8%B7%D8%A7%D9%84%D9%8A"
+        >
+          <img
+            class="restaurant-logo"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIJ-sXReSok67nDDw0imkkDdSCFZPtAbFA5Q&s"
+            alt="مطعم البيتزا الإيطالي"
+          />
+          <div class="restaurant-name">🍕 مطعم البيتزا الإيطالي</div>
+        </a>
+
+        <a
+          class="restaurant-card"
+          href="index.html?res=%D8%A8%D8%B1%D8%AC%D8%B1+%D8%A8%D8%A7%D8%B2%D9%88%D9%83%D8%A7"
+        >
+          <img
+            class="restaurant-logo"
+            src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800"
+            alt="برجر بازوكا"
+          />
+          <div class="restaurant-name">🍔 برجر بازوكا</div>
+        </a>
+
+        <a
+          class="restaurant-card"
+          href="index.html?res=%D9%85%D8%B7%D8%B9%D9%85+%D8%A7%D9%84%D8%B3%D9%88%D8%B4%D9%8A+%D8%A7%D9%84%D9%8A%D8%A7%D8%A8%D8%A7%D9%86%D9%8A"
+        >
+          <img
+            class="restaurant-logo"
+            src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=800"
+            alt="مطعم السوشي الياباني"
+          />
+          <div class="restaurant-name">🍱 مطعم السوشي الياباني</div>
+        </a>
+
+        <a
+          class="restaurant-card"
+          href="index.html?res=%D8%AF%D8%AC%D8%A7%D8%AC+%D8%B3%D8%AA%D8%B1%D9%8A%D8%AA"
+        >
+          <img
+            class="restaurant-logo"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSE7wbWL7yM23ASrpOVqlwllQO4JHH47STzwg&s"
+            alt="دجاج ستريت"
+          />
+          <div class="restaurant-name">🍗 دجاج ستريت</div>
+        </a>
+
+        <a
+          class="restaurant-card"
+          href="index.html?res=%D9%83%D8%A7%D9%81%D9%8A%D9%87+%D8%A7%D9%84%D9%81%D9%86+%D8%A7%D9%84%D8%AD%D8%AF%D9%8A%D8%AB"
+        >
+          <img
+            class="restaurant-logo"
+            src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800"
+            alt="كافيه الفن الحديث"
+          />
+          <div class="restaurant-name">☕ كافيه الفن الحديث</div>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>
