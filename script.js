@@ -400,6 +400,10 @@
       description: (rest && rest.description) || "",
       hours: (rest && rest.hours) || "",
       social: (rest && rest.social) || {},
+      email:
+        localStorage.getItem("restaurantEmail") ||
+        (rest && rest.email) ||
+        "ibra7im.engineer@gmail.com",
       phone: localStorage.getItem("restaurantPhone") || "201021279663",
       menu:
         typeof MASTER_MENU !== "undefined"
@@ -478,6 +482,38 @@
       // expose selected to global for other features
       window.SELECTED_RESTAURANT = selected;
 
+      // Update contact links (if contact page present)
+      try {
+        const branchPhone =
+          (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
+          localStorage.getItem("restaurantPhone") ||
+          "201021279663";
+        const branchEmail =
+          (window.BRANCH_DATA && window.BRANCH_DATA.email) ||
+          localStorage.getItem("restaurantEmail") ||
+          "ibra7im.engineer@gmail.com";
+
+        const phoneAnchor = document.getElementById("contactPhoneLink");
+        if (phoneAnchor) {
+          phoneAnchor.href = `tel:+${branchPhone}`;
+          phoneAnchor.textContent = "+20 " + branchPhone.replace(/^20/, "");
+        }
+
+        const emailAnchor = document.getElementById("contactEmailLink");
+        if (emailAnchor) {
+          emailAnchor.href = `mailto:${branchEmail}`;
+          emailAnchor.textContent = branchEmail;
+        }
+
+        const waBtn = document.getElementById("contactWaButton");
+        if (waBtn) waBtn.href = `https://wa.me/${branchPhone}`;
+
+        const mailBtn = document.getElementById("contactMailButton");
+        if (mailBtn) mailBtn.href = `mailto:${branchEmail}`;
+      } catch (e) {
+        console.warn("Failed to update contact links:", e);
+      }
+
       // Inject admin badge showing current restaurant (if admin area exists)
       try {
         const phoneInput = document.getElementById("restaurantPhoneInput");
@@ -531,6 +567,11 @@
     (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
     localStorage.getItem("restaurantPhone") ||
     "201021279663"; // رقم المطعم
+  // Email for the current branch
+  let RESTAURANT_EMAIL =
+    (window.BRANCH_DATA && window.BRANCH_DATA.email) ||
+    localStorage.getItem("restaurantEmail") ||
+    "ibra7im.engineer@gmail.com";
 
   // حساب المدير الافتراضي
   const ADMIN_ACCOUNT = {
@@ -2883,6 +2924,10 @@
             <input id="branchWhatsappInput" placeholder="2010..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
           </div>
           <div>
+            <label style="font-weight:700; display:block; margin-bottom:6px;">بريد التواصل للفرع</label>
+            <input id="branchEmailInput" placeholder="you@domain.com" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+          </div>
+          <div>
             <label style="font-weight:700; display:block; margin-bottom:6px;">رابط لوجو الفرع</label>
             <input id="branchLogoInput" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
           </div>
@@ -2911,6 +2956,8 @@
         window.BRANCH_DATA.name || "";
       document.getElementById("branchWhatsappInput").value =
         window.BRANCH_DATA.phone || "";
+      document.getElementById("branchEmailInput").value =
+        window.BRANCH_DATA.email || "";
       document.getElementById("branchLogoInput").value =
         window.BRANCH_DATA.logo || "";
       document.getElementById("branchHoursInput").value =
@@ -2927,9 +2974,14 @@
         const name =
           document.getElementById("branchNameInput").value.trim() ||
           window.BRANCH_DATA.name;
-        const phone =
+        let phone =
           document.getElementById("branchWhatsappInput").value.trim() ||
-          window.BRANCH_DATA.phone;
+          window.BRANCH_DATA.phone ||
+          "";
+        const email =
+          document.getElementById("branchEmailInput").value.trim() ||
+          window.BRANCH_DATA.email ||
+          "";
         const logo =
           document.getElementById("branchLogoInput").value.trim() ||
           window.BRANCH_DATA.logo;
@@ -2942,6 +2994,39 @@
         const socialRaw = document
           .getElementById("branchSocialInput")
           .value.trim();
+
+        // --- Validation & normalization ---
+        try {
+          // Normalize phone to Egyptian international form without + (e.g. 2010########)
+          let phoneDigits = (phone || "").replace(/\D/g, "");
+          if (phoneDigits.startsWith("0") && phoneDigits.length === 11) {
+            phoneDigits = "20" + phoneDigits.slice(1);
+          } else if (phoneDigits.length === 9 && phoneDigits.startsWith("1")) {
+            phoneDigits = "20" + phoneDigits;
+          }
+          // If still looks like local '2010...' accept, else try to leave as-is
+          if (!Validator.isValidPhone(phoneDigits)) {
+            showNotification(
+              "⚠️ رقم واتساب الفرع غير صحيح. أدخل رقم مصري مثل 01012345678 أو 201012345678",
+              "error",
+            );
+            return;
+          }
+          phone = phoneDigits;
+
+          // Validate email if provided
+          if (email && !Validator.isValidEmail(email)) {
+            showNotification("⚠️ صيغة البريد الإلكتروني غير صحيحة", "error");
+            return;
+          }
+        } catch (e) {
+          console.warn("Validation error in branch settings:", e);
+          showNotification(
+            "❌ فشل التحقق من بيانات الفرع. حاول مرة أخرى.",
+            "error",
+          );
+          return;
+        }
         let social = window.BRANCH_DATA.social || {};
         if (socialRaw) {
           try {
@@ -2958,21 +3043,36 @@
 
         window.BRANCH_DATA.name = name;
         window.BRANCH_DATA.phone = phone;
+        window.BRANCH_DATA.email = email;
         window.BRANCH_DATA.logo = logo;
         window.BRANCH_DATA.hours = hours;
         window.BRANCH_DATA.description = desc;
         window.BRANCH_DATA.social = social;
 
-        // update global RESTAURANT_PHONE for immediate effects
+        // update global RESTAURANT_PHONE and RESTAURANT_EMAIL for immediate effects
         RESTAURANT_PHONE = phone;
+        RESTAURANT_EMAIL = email;
 
         saveBranchData(window.BRANCH_DATA);
+        try {
+          localStorage.setItem(
+            "restaurantEmail",
+            window.BRANCH_DATA.email || "",
+          );
+        } catch (e) {}
+        try {
+          localStorage.setItem("restaurantPhone", phone || "");
+        } catch (e) {}
         showNotification("✅ تم حفظ بيانات الفرع بنجاح", "success");
         // refresh admin statistics & badge
         updateAdminStatistics();
         const badge = document.getElementById("adminRestaurantBadge");
         if (badge)
           badge.textContent = `أنت تعدل الآن منيو مطعم: ${window.BRANCH_DATA.name}`;
+        // Update contact links on the page immediately
+        try {
+          if (window.applyRestaurantToUI) window.applyRestaurantToUI();
+        } catch (e) {}
       };
 
       document.getElementById("resetBranchToMasterBtn").onclick = function () {
@@ -5403,6 +5503,33 @@ function googleSignIn() {
   }
 }
 
+// Centralized contact getters (use these everywhere for consistency)
+function getRestaurantEmail() {
+  return (
+    (window.BRANCH_DATA && window.BRANCH_DATA.email) ||
+    localStorage.getItem("restaurantEmail") ||
+    (typeof RESTAURANT_EMAIL !== "undefined" && RESTAURANT_EMAIL) ||
+    "ibra7im.engineer@gmail.com"
+  );
+}
+
+function getRestaurantPhone() {
+  return (
+    (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
+    localStorage.getItem("restaurantPhone") ||
+    (typeof RESTAURANT_PHONE !== "undefined" && RESTAURANT_PHONE) ||
+    "201021279663"
+  );
+}
+
+function formatPhoneForDisplay(phone) {
+  if (!phone) return "";
+  const p = String(phone).replace(/\D/g, "");
+  if (p.startsWith("20")) return "+" + p;
+  if (p.length === 11 && p.startsWith("0")) return "+20" + p.slice(1);
+  return phone;
+}
+
 /* ==================================================
    شروط الاستخدام وسياسة الخصوصية
    ================================================== */
@@ -5470,7 +5597,7 @@ function showTermsOfService() {
                 <p>نحتفظ بالحق في تعديل هذه الشروط في أي وقت. سيتم إبلاغك بأي تغييرات مهمة.</p>
                 
                 <h3 style="color:#FF6B35;">10. التواصل مع الدعم</h3>
-                <p>إذا كان لديك أي استفسارات حول هذه الشروط، يرجى التواصل معنا على: <strong>ibra7im.engineer@gmail.com</strong></p>
+                <p>إذا كان لديك أي استفسارات حول هذه الشروط، يرجى التواصل معنا على: <strong>${getRestaurantEmail()}</strong></p>
             </div>
             
             <!-- Footer -->
@@ -5605,7 +5732,7 @@ function showPrivacyPolicy() {
                 <p>قد نعدل هذه السياسة في أي وقت. سيتم إبلاغك بأي تغييرات مهمة من خلال بريدك الإلكتروني.</p>
                 
                 <h3 style="color:#2196F3;">10. التواصل معنا</h3>
-                <p>إذا كان لديك أي استفسارات حول سياسة الخصوصية، يرجى التواصل معنا على: <strong>ibra7im.engineer@gmail.com</strong></p>
+                <p>إذا كان لديك أي استفسارات حول سياسة الخصوصية، يرجى التواصل معنا على: <strong>${getRestaurantEmail()}</strong></p>
                 
                 <p style="margin-top:20px; padding-top:20px; border-top:1px solid #E0E0E0; font-size:12px; color:#7F8C8D;">
                     <strong>آخر تحديث:</strong> ${new Date().toLocaleDateString("ar-EG")}
