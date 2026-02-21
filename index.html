@@ -40,7 +40,7 @@
     <meta property="og:url" content="https://myorder.app">
     
     <!-- Security Headers (CSP) - allow service worker, Firebase and Google hosts -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com https://www.googleapis.com https://script.google.com https://script.googleusercontent.com https://www.gstatic.com/firebasejs/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; font-src 'self' https: data:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' https: wss: wss://my-order-c6010-default-rtdb.firebaseio.com https://my-order-c6010-default-rtdb.firebaseio.com wss://*.firebaseio.com; frame-src 'self' https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com https://www.googleapis.com https://script.google.com https://script.googleusercontent.com https://www.gstatic.com/firebasejs/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; font-src 'self' https: data:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' https: wss: wss://my-order-c6010-default-rtdb.firebaseio.com https://my-order-c6010-default-rtdb.firebaseio.com wss://*.firebaseio.com; frame-src 'self' https://www.google.com https://maps.google.com https://www.google.com/maps;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -528,7 +528,63 @@
 
                         <div style="margin-top:20px; border-radius:8px; overflow:hidden;">
                             <!-- lightweight responsive map (replace src with your Google Maps embed if available) -->
-                            <iframe title="خريطة الموقع" src="https://www.google.com/maps?q=Cairo+Egypt&output=embed" style="width:100%; height:220px; border:0; display:block;"></iframe>
+                            <!-- Lightweight responsive map with error handling and fallback -->
+                            <div id="map-container" style="width:100%; height:220px; background:linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius:8px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                                <!-- Primary: Google Maps Embed with error handling -->
+                                <iframe 
+                                    id="google-maps-frame"
+                                    title="خريطة الموقع"
+                                    src="https://www.google.com/maps?q=Cairo+Egypt&output=embed"
+                                    style="width:100%; height:100%; border:0; display:block; position:absolute; top:0; left:0;"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; document.getElementById('map-fallback').style.display='flex';">
+                                </iframe>
+                                <!-- Fallback: Static map image with link -->
+                                <div id="map-fallback" style="display:none; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%); padding:20px; text-align:center; box-sizing:border-box;">
+                                    <i class="fa-solid fa-map-location-dot" style="font-size:48px; color:#FF6B35; margin-bottom:12px;"></i>
+                                    <p style="margin:0 0 12px 0; color:#333; font-weight:600; font-size:14px;">موقعنا على خرائط Google</p>
+                                    <p style="margin:0 0 16px 0; color:#666; font-size:12px;">شارع النيل، القاهرة، مصر</p>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=Cairo+Egypt" 
+                                       target="_blank" 
+                                       style="display:inline-flex; align-items:center; gap:8px; padding:10px 20px; background:linear-gradient(135deg, #FF6B35, #FF8E5F); color:white; text-decoration:none; border-radius:8px; font-weight:700; font-size:13px; transition:all 0.3s;"
+                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(255,107,53,0.4)'"
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                        <i class="fa-solid fa-external-link-alt"></i>
+                                        افتح في خرائط Google
+                                    </a>
+                                </div>
+                            </div>
+                            <script>
+                                (function() {
+                                    // Detect if page is running inside an iframe (MFE environment)
+                                    try {
+                                        if (window.self !== window.top) {
+                                            console.warn('⚠️ Page is running inside an iframe (MFE environment)');
+                                            var iframe = document.getElementById('google-maps-frame');
+                                            var fallback = document.getElementById('map-fallback');
+                                            if (iframe) iframe.style.display = 'none';
+                                            if (fallback) fallback.style.display = 'flex';
+                                        }
+                                    } catch(e) {
+                                        console.warn('⚠️ Cross-origin detected - hiding embedded map');
+                                        var iframe = document.getElementById('google-maps-frame');
+                                        var fallback = document.getElementById('map-fallback');
+                                        if (iframe) iframe.style.display = 'none';
+                                        if (fallback) fallback.style.display = 'flex';
+                                    }
+                                    
+                                    // Add load error handling
+                                    var mapIframe = document.getElementById('google-maps-frame');
+                                    if (mapIframe) {
+                                        mapIframe.addEventListener('error', function() {
+                                            console.error('❌ Google Maps embed failed to load');
+                                            this.style.display = 'none';
+                                            var fb = document.getElementById('map-fallback');
+                                            if (fb) fb.style.display = 'flex';
+                                        });
+                                    }
+                                })();
+                            </script>
                         </div>
                     </div>
 

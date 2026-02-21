@@ -1,37 +1,59 @@
 {
-  "name": "My Order",
+  "name": "My Order - اطلب وجبتك",
   "short_name": "My Order",
-  "description": "My Order. اطلب وجبتك من أفضل المطاعم بسهولة وبأمان | طوّرها Ibrahim Mohamed",
+  "description": "اطلب وجبتك من أفضل المطاعم بسهولة وأمان | توصيل سريع",
   "developer": {
     "name": "Ibrahim Mohamed",
-    "url": "https://www.instagram.com/ibra7im_mo7amad?igsh=N3oyZWxubDA2YTYw",
-    "linkedin": "https://www.linkedin.com/in/ibra7im-mo7amed?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app",
+    "url": "https://www.instagram.com/ibra7im_mo7amad",
+    "linkedin": "https://www.linkedin.com/in/ibra7im-mo7amed",
     "email": "ibra7im.engineer@gmail.com"
   },
   "start_url": "index.html",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-control-overlay", "standalone"],
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#FF6B35",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "icons/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     },
     {
       "src": "icons/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["food", "shopping"],
+  "categories": ["food", "drink", "shopping"],
   "screenshots": [
     {
       "src": "https://images.unsplash.com/photo-1504674900152-b8b3e3640da7?w=540&h=720",
+      "sizes": "540x720",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=540&h=720",
       "sizes": "540x720",
       "type": "image/jpeg",
       "form_factor": "narrow"
@@ -45,7 +67,7 @@
       "url": "/?action=menu",
       "icons": [
         {
-          "src": "https://images.unsplash.com/photo-1495098861352-c017b8532557?w=192&h=192",
+          "src": "icons/icon-192.svg",
           "sizes": "192x192"
         }
       ]
@@ -57,7 +79,19 @@
       "url": "/?action=orders",
       "icons": [
         {
-          "src": "https://images.unsplash.com/photo-1563720223185-11003397e860?w=192&h=192",
+          "src": "icons/icon-192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "السلة",
+      "short_name": "السلة",
+      "description": "عرض سلة المشتريات",
+      "url": "/?action=cart",
+      "icons": [
+        {
+          "src": "icons/icon-192.svg",
           "sizes": "192x192"
         }
       ]
@@ -72,5 +106,7 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "related_applications": [],
+  "prefer_related_applications": false
 }

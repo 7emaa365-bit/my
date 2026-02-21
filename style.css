@@ -12,6 +12,48 @@
    
    ===================================================== */
 
+/* --- Mobile Safe Area Support (Notched Devices) --- */
+@supports (padding: max(0px)) {
+    :root {
+        --sat: env(safe-area-inset-top);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+        --sar: env(safe-area-inset-right);
+    }
+    
+    .navbar {
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-top));
+        padding-inline-start: max(16px, env(safe-area-inset-left));
+        padding-inline-end: max(16px, env(safe-area-inset-right));
+    }
+    
+    header {
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+    
+    main {
+        padding-top: max(var(--header-height), calc(var(--header-height) + env(safe-area-inset-top)));
+    }
+    
+    .mobile-nav-menu {
+        padding-top: max(20px, env(safe-area-inset-top));
+    }
+    
+    .mobile-nav-actions {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    
+    footer {
+        padding-bottom: max(40px, env(safe-area-inset-bottom));
+    }
+    
+    .cart-page .confirm-btn,
+    .cart-page .main-btn {
+        margin-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+}
+
 /* --- 1. إعدادات الألوان والخطوط الأساسية (محسّنة) --- */
 :root {
     --primary: #FF6B35;
@@ -36,6 +78,7 @@
     --shadow-xl: 0 25px 60px rgba(0,0,0,0.15);
     --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     --header-height: 88px;
+    --min-touch-target: 44px;
 }
 
 * {
