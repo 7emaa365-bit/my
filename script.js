@@ -428,6 +428,23 @@
       try {
         localStorage.setItem("Menu", JSON.stringify(branchObj.menu));
       } catch (e) {}
+      try {
+        // notify in-page listeners that branch data changed
+        try {
+          document.dispatchEvent(
+            new CustomEvent("branchDataUpdated", {
+              detail: { branch: branchObj },
+            }),
+          );
+        } catch (e) {}
+        // also push a small storage key so other tabs can detect change
+        try {
+          localStorage.setItem(
+            `branch_last_update_${window.getBranchKey()}`,
+            Date.now().toString(),
+          );
+        } catch (e) {}
+      } catch (e) {}
       return true;
     } catch (e) {
       console.error("Failed to save branch data:", e);
@@ -781,6 +798,12 @@
     if (pageId === "admin" || pageId === "admin-page") {
       renderAdminList();
       initializeAdminPanel();
+      // initialize smart dashboard if available
+      try {
+        setTimeout(() => {
+          if (typeof initSmartDashboard === "function") initSmartDashboard();
+        }, 200);
+      } catch (e) {}
     }
     if (pageId === "contact" || pageId === "contact-page") renderReviews();
     if (pageId === "orders" || pageId === "orders-page") loadCustomerOrders();
@@ -1448,6 +1471,11 @@
             // تحديث الإحصائيات في لوحة التحكم
             if (typeof updateAdminStatistics === "function") {
               updateAdminStatistics();
+            }
+
+            // تحديث لوحة التحكم الذكية فوراً
+            if (typeof refreshSmartDashboard === "function") {
+              refreshSmartDashboard();
             }
 
             let successMessage = "✨ تم إرسال الطلب بنجاح! شكراً لك 🙏";
@@ -2960,46 +2988,46 @@
             document.body.insertBefore(settingsPanel, document.body.firstChild);
         }
 
-      //   // Build inner HTML for settings (simple, robust inputs)
-      //   settingsPanel.innerHTML = `
-      //   <h3 style="margin:0 0 10px; font-size:18px; color:#2C3E50;">⚙️ إعدادات الفرع</h3>
-      //   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-      //     <div>
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">اسم الفرع</label>
-      //       <input id="branchNameInput" placeholder="اسم الفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-      //     </div>
-      //     <div>
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">رقم واتساب الفرع</label>
-      //       <input id="branchWhatsappInput" placeholder="2010..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" oninput="saveRestaurantPhone(this.value)" />
-      //     </div>
-      //     <div>
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">بريد التواصل للفرع</label>
-      //       <input id="branchEmailInput" placeholder="you@domain.com" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-      //     </div>
-      //     <div>
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">رابط لوجو الفرع</label>
-      //       <input id="branchLogoInput" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-      //     </div>
-      //     <div>
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">ساعات العمل</label>
-      //       <input id="branchHoursInput" placeholder="مثال: 10:00 - 23:00" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-      //     </div>
-      //     <div style="grid-column:1/-1;">
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">وصف الفرع</label>
-      //       <textarea id="branchDescInput" placeholder="وصف قصير للفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE; min-height:60px;"></textarea>
-      //     </div>
-      //     <div style="grid-column:1/-1;">
-      //       <label style="font-weight:700; display:block; margin-bottom:6px;">روابط التواصل (JSON أو comma-separated)</label>
-      //       <input id="branchSocialInput" placeholder='مثال: {"instagram":"https://...","facebook":"https://..."} أو instagram,facebook' style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-      //     </div>
-      //   </div>
-      //   <div style="display:flex; gap:10px; margin-top:12px; justify-content:flex-end;">
-      //     <button id="previewBranchSettingsBtn" style="background:#10B981; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">عرض فوري</button>
-      //     <button id="saveBranchSettingsBtn" style="background:linear-gradient(135deg,#FF6B35,#FF8E5F); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">حفظ بيانات الفرع</button>
-      //     <button id="resetBranchToMasterBtn" style="background:#F3F4F6; color:#333; border:1px solid #E6E9EE; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600;">تهيئة المنيو الافتراضي</button>
-      //   </div>
-      //   <div id="branchReportsContainer" style="margin-top:14px;"></div>
-      // `;
+        //   // Build inner HTML for settings (simple, robust inputs)
+        //   settingsPanel.innerHTML = `
+        //   <h3 style="margin:0 0 10px; font-size:18px; color:#2C3E50;">⚙️ إعدادات الفرع</h3>
+        //   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+        //     <div>
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">اسم الفرع</label>
+        //       <input id="branchNameInput" placeholder="اسم الفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+        //     </div>
+        //     <div>
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">رقم واتساب الفرع</label>
+        //       <input id="branchWhatsappInput" placeholder="2010..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" oninput="saveRestaurantPhone(this.value)" />
+        //     </div>
+        //     <div>
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">بريد التواصل للفرع</label>
+        //       <input id="branchEmailInput" placeholder="you@domain.com" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+        //     </div>
+        //     <div>
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">رابط لوجو الفرع</label>
+        //       <input id="branchLogoInput" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+        //     </div>
+        //     <div>
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">ساعات العمل</label>
+        //       <input id="branchHoursInput" placeholder="مثال: 10:00 - 23:00" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+        //     </div>
+        //     <div style="grid-column:1/-1;">
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">وصف الفرع</label>
+        //       <textarea id="branchDescInput" placeholder="وصف قصير للفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE; min-height:60px;"></textarea>
+        //     </div>
+        //     <div style="grid-column:1/-1;">
+        //       <label style="font-weight:700; display:block; margin-bottom:6px;">روابط التواصل (JSON أو comma-separated)</label>
+        //       <input id="branchSocialInput" placeholder='مثال: {"instagram":"https://...","facebook":"https://..."} أو instagram,facebook' style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+        //     </div>
+        //   </div>
+        //   <div style="display:flex; gap:10px; margin-top:12px; justify-content:flex-end;">
+        //     <button id="previewBranchSettingsBtn" style="background:#10B981; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">عرض فوري</button>
+        //     <button id="saveBranchSettingsBtn" style="background:linear-gradient(135deg,#FF6B35,#FF8E5F); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">حفظ بيانات الفرع</button>
+        //     <button id="resetBranchToMasterBtn" style="background:#F3F4F6; color:#333; border:1px solid #E6E9EE; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600;">تهيئة المنيو الافتراضي</button>
+        //   </div>
+        //   <div id="branchReportsContainer" style="margin-top:14px;"></div>
+        // `;
 
         // Populate the fields from BRANCH_DATA
         document.getElementById("branchNameInput").value =
@@ -3280,6 +3308,597 @@
       });
     } catch (error) {
       console.error("❌ خطأ في تحديث الإحصائيات:", error);
+    }
+  }
+
+  // ============================================================
+  // دوال ربط البيانات الذكية (Smart Data Binding)
+  // ============================================================
+
+  // دالة رئيسية لقراءة بيانات الطلبات من localStorage
+  function getOrdersFromStorage() {
+    try {
+      // أولاً: جلب من بيانات الفرع الحالي
+      if (window.BRANCH_DATA && window.BRANCH_DATA.orders) {
+        return window.BRANCH_DATA.orders;
+      }
+      // ثانياً: محاولة إعادة تحميل بيانات الفرع
+      const branchKey = window.getBranchKey();
+      const raw = localStorage.getItem(branchKey);
+      if (raw) {
+        const branchData = JSON.parse(raw);
+        if (branchData && branchData.orders) {
+          window.BRANCH_DATA = branchData;
+          return branchData.orders;
+        }
+      }
+      // ثالثاً: السجل المركزي للتوافقية
+      return JSON.parse(localStorage.getItem("allOrders")) || [];
+    } catch (e) {
+      console.error("Error reading orders from storage:", e);
+      return [];
+    }
+  }
+
+  // دالة حساب إجمالي المبيعات
+  function calculateTotalSales(orders) {
+    if (!orders || orders.length === 0) return 0;
+    return orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  }
+
+  // دالة حساب عدد الطلبات
+  function calculateOrderCount(orders) {
+    return orders ? orders.length : 0;
+  }
+
+  // دالة حساب الأكثر مبيعاً (خوارزمية بسيطة)
+  function calculateBestSeller(orders, menuItems) {
+    if (!orders || orders.length === 0) return "—";
+
+    const itemCounts = {};
+    const menuMap = {};
+
+    // إنشاء خريطة للأصناف
+    if (menuItems) {
+      menuItems.forEach((item) => {
+        menuMap[item.id] = item;
+      });
+    }
+
+    // حساب تكرار كل صنف
+    orders.forEach((order) => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          const key = item.id || item.name;
+          const qty = parseInt(item.quantity || 1, 10) || 1;
+          itemCounts[key] = (itemCounts[key] || 0) + qty;
+        });
+      }
+    });
+
+    // البحث عن الصنف الأكثر تكراراً
+    let bestSeller = null;
+    let maxQty = 0;
+
+    Object.keys(itemCounts).forEach((key) => {
+      if (itemCounts[key] > maxQty) {
+        maxQty = itemCounts[key];
+        // إذا كان لدينا معلومات في المينيو، استخدم الاسم
+        if (menuMap[key]) {
+          bestSeller = menuMap[key].name;
+        } else {
+          bestSeller = key;
+        }
+      }
+    });
+
+    return bestSeller || "—";
+  }
+
+  // دالة حساب النمو اليومي (مقارنة اليوم بالأمس)
+  function calculateDailyGrowth(orders) {
+    if (!orders || orders.length === 0) return 0;
+
+    const now = new Date();
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+
+    let ordersToday = 0;
+    let ordersYesterday = 0;
+
+    orders.forEach((order) => {
+      try {
+        const orderDate = order.timestamp ? new Date(order.timestamp) : null;
+        if (orderDate) {
+          if (orderDate >= todayStart) {
+            ordersToday++;
+          } else if (orderDate >= yesterdayStart && orderDate < todayStart) {
+            ordersYesterday++;
+          }
+        }
+      } catch (e) {
+        // تجاهل الأخطاء
+      }
+    });
+
+    if (ordersYesterday === 0) {
+      return ordersToday > 0 ? 100 : 0;
+    }
+
+    const growth = Math.round(
+      ((ordersToday - ordersYesterday) / ordersYesterday) * 100,
+    );
+    return growth;
+  }
+
+  // دالة للحصول على بيانات المينيو
+  function getMenuFromStorage() {
+    try {
+      if (window.BRANCH_DATA && window.BRANCH_DATA.menu) {
+        return window.BRANCH_DATA.menu;
+      }
+      const branchKey = window.getBranchKey();
+      const raw = localStorage.getItem(branchKey);
+      if (raw) {
+        const branchData = JSON.parse(raw);
+        if (branchData && branchData.menu) {
+          return branchData.menu;
+        }
+      }
+      return menuItems || [];
+    } catch (e) {
+      console.error("Error reading menu from storage:", e);
+      return menuItems || [];
+    }
+  }
+
+  // دالة لتحديث لوحة التحكم الذكية (تدعو عند إضافة طلب جديد)
+  function refreshSmartDashboard() {
+    try {
+      const rangeSelect = document.getElementById("smartRangeSelect");
+      const range = (rangeSelect && rangeSelect.value) || "7days";
+
+      // تحديث البطاقات العلوية
+      updateSmartTopCards(range);
+
+      // تحديث الرسوم البيانية
+      renderSmartCharts(range);
+
+      // تحديث الإحصائيات العامة
+      if (typeof updateAdminStatistics === "function") {
+        updateAdminStatistics();
+      }
+
+      console.log("✅ تم تحديث لوحة التحكم الذكية");
+    } catch (e) {
+      console.error("Error refreshing smart dashboard:", e);
+    }
+  }
+
+  // تصدير الدوال للاستخدام العام
+  window.refreshSmartDashboard = refreshSmartDashboard;
+  window.getOrdersFromStorage = getOrdersFromStorage;
+
+  // --- Smart Analytics Dashboard (per-branch) ---
+  function computeSmartStats(range = "7days") {
+    try {
+      const orders = (window.BRANCH_DATA && window.BRANCH_DATA.orders) || [];
+      const now = new Date();
+      // Helper: parse order timestamp robustly
+      const parseDate = (t) => {
+        try {
+          return t ? new Date(t) : null;
+        } catch (e) {
+          return null;
+        }
+      };
+
+      // Filter orders by range (returns orders within range)
+      const filterByRange = (arr, rangeKey) => {
+        const copy = (arr || []).slice();
+        if (rangeKey === "today") {
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return (
+              d &&
+              d.getFullYear() === now.getFullYear() &&
+              d.getMonth() === now.getMonth() &&
+              d.getDate() === now.getDate()
+            );
+          });
+        }
+        if (rangeKey === "7days") {
+          const weekAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+          weekAgo.setHours(0, 0, 0, 0);
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return d && d >= weekAgo && d <= now;
+          });
+        }
+        if (rangeKey === "month") {
+          const monthAgo = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+          monthAgo.setHours(0, 0, 0, 0);
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return d && d >= monthAgo && d <= now;
+          });
+        }
+        return copy;
+      };
+
+      const filtered = filterByRange(orders, range);
+
+      // Consider successful = not cancelled (ملغى) and having total
+      const successFiltered = filtered.filter(
+        (o) =>
+          o &&
+          typeof o.total === "number" &&
+          !(o.status && /ملغ/i.test(String(o.status))),
+      );
+
+      // Total sales and orders
+      const totalSales = successFiltered.reduce(
+        (s, o) => s + (o.total || 0),
+        0,
+      );
+      const orderCount = successFiltered.length;
+
+      // Best seller (by item quantity)
+      const itemCounts = {};
+      const menuMap = {};
+      try {
+        ((window.BRANCH_DATA && window.BRANCH_DATA.menu) || []).forEach((m) => {
+          menuMap[m.id] = m;
+        });
+      } catch (e) {}
+
+      successFiltered.forEach((o) => {
+        (o.items || []).forEach((it) => {
+          const key = it.id || it.name || JSON.stringify(it);
+          const qty = parseInt(it.quantity || 1, 10) || 1;
+          itemCounts[key] = (itemCounts[key] || 0) + qty;
+        });
+      });
+
+      let bestSeller = null;
+      let bestQty = 0;
+      Object.keys(itemCounts).forEach((k) => {
+        if (itemCounts[k] > bestQty) {
+          bestQty = itemCounts[k];
+          bestSeller = menuMap[k] ? menuMap[k].name : k;
+        }
+      });
+
+      // Daily growth: compare today orders vs yesterday
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      const ordersToday = (orders || []).filter((o) => {
+        const d = parseDate(o.timestamp);
+        return d && d >= today;
+      }).length;
+      const ordersYesterday = (orders || []).filter((o) => {
+        const d = parseDate(o.timestamp);
+        return d && d >= yesterday && d < today;
+      }).length;
+      let growth = 0;
+      if (ordersYesterday === 0) growth = ordersToday === 0 ? 0 : 100;
+      else
+        growth = Math.round(
+          ((ordersToday - ordersYesterday) / ordersYesterday) * 100,
+        );
+
+      return {
+        totalSales,
+        orderCount,
+        bestSeller: bestSeller || "—",
+        growth,
+        raw: successFiltered,
+      };
+    } catch (e) {
+      console.warn("computeSmartStats error", e);
+      return {
+        totalSales: 0,
+        orderCount: 0,
+        bestSeller: "—",
+        growth: 0,
+        raw: [],
+      };
+    }
+  }
+
+  let _ordersLineChart = null;
+  let _salesPieChart = null;
+
+  function renderSmartCharts(range = "7days") {
+    try {
+      const orders = (window.BRANCH_DATA && window.BRANCH_DATA.orders) || [];
+      const now = new Date();
+      // helper to parse
+      const parseDate = (t) => {
+        try {
+          return t ? new Date(t) : null;
+        } catch (e) {
+          return null;
+        }
+      };
+      // filter orders by range and success
+      const filterByRangeLocal = (arr, rangeKey) => {
+        const copy = (arr || []).slice();
+        if (rangeKey === "today")
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return (
+              d &&
+              d.getFullYear() === now.getFullYear() &&
+              d.getMonth() === now.getMonth() &&
+              d.getDate() === now.getDate()
+            );
+          });
+        if (rangeKey === "7days") {
+          const weekAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+          weekAgo.setHours(0, 0, 0, 0);
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return d && d >= weekAgo && d <= now;
+          });
+        }
+        if (rangeKey === "month") {
+          const monthAgo = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+          monthAgo.setHours(0, 0, 0, 0);
+          return copy.filter((o) => {
+            const d = parseDate(o.timestamp);
+            return d && d >= monthAgo && d <= now;
+          });
+        }
+        return copy;
+      };
+      const filteredOrders = filterByRangeLocal(orders, range);
+      const successOrders = filteredOrders.filter(
+        (o) =>
+          o &&
+          typeof o.total === "number" &&
+          !(o.status && /ملغ/i.test(String(o.status))),
+      );
+      // Line chart: build buckets depending on range
+      const labels = [];
+      const counts = [];
+      if (range === "today") {
+        for (let h = 0; h < 24; h++) {
+          labels.push(h + ":00");
+          const start = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            h,
+          );
+          const end = new Date(start.getTime() + 60 * 60 * 1000);
+          counts.push(
+            successOrders.filter((o) => {
+              const od = o && o.timestamp ? new Date(o.timestamp) : null;
+              return od && od >= start && od < end;
+            }).length,
+          );
+        }
+      } else {
+        const days = range === "7days" ? 7 : 30;
+        for (let i = days - 1; i >= 0; i--) {
+          const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          labels.push(
+            d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" }),
+          );
+          const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+          const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          counts.push(
+            successOrders.filter((o) => {
+              const od = o && o.timestamp ? new Date(o.timestamp) : null;
+              return od && od >= start && od < end;
+            }).length,
+          );
+        }
+      }
+
+      const lineCtx = document.getElementById("ordersLineChart");
+      if (lineCtx) {
+        if (_ordersLineChart) _ordersLineChart.destroy();
+        _ordersLineChart = new Chart(lineCtx.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "عدد الطلبات",
+                data: counts,
+                borderColor: "#FF6B35",
+                backgroundColor: "rgba(255,107,53,0.15)",
+                tension: 0.3,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+          },
+        });
+      }
+
+      // Pie chart: sales by category (use successOrders)
+      const categoryTotals = {};
+      const menuMap = {};
+      ((window.BRANCH_DATA && window.BRANCH_DATA.menu) || []).forEach(
+        (m) => (menuMap[m.id] = m),
+      );
+      successOrders.forEach((o) => {
+        if (o && o.items) {
+          o.items.forEach((it) => {
+            const qty = parseInt(it.quantity || 1, 10) || 1;
+            const rev = (it.price || 0) * qty;
+            const cat = menuMap[it.id] ? menuMap[it.id].cat : it.cat || "other";
+            categoryTotals[cat] = (categoryTotals[cat] || 0) + rev;
+          });
+        }
+      });
+
+      const pieCtx = document.getElementById("salesPieChart");
+      if (pieCtx) {
+        const labels = Object.keys(categoryTotals);
+        const data = labels.map((k) => categoryTotals[k]);
+        if (_salesPieChart) _salesPieChart.destroy();
+        _salesPieChart = new Chart(pieCtx.getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: data,
+                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("renderSmartCharts error", e);
+    }
+  }
+
+  function updateSmartTopCards(range) {
+    try {
+      const s = computeSmartStats(range);
+      const nf = new Intl.NumberFormat("ar-EG", {
+        style: "currency",
+        currency: "EGP",
+        maximumFractionDigits: 0,
+      });
+      const totalSalesEl = document.getElementById("smartTotalSales");
+      const countEl = document.getElementById("smartOrderCount");
+      const bestEl = document.getElementById("smartBestSeller");
+      const growthEl = document.getElementById("smartDailyGrowth");
+      if (totalSalesEl) totalSalesEl.textContent = nf.format(s.totalSales || 0);
+      if (countEl) countEl.textContent = s.orderCount || 0;
+      if (bestEl) bestEl.textContent = s.bestSeller || "—";
+      if (growthEl)
+        growthEl.textContent = (s.growth >= 0 ? "+" : "") + s.growth + "%";
+    } catch (e) {
+      console.warn("updateSmartTopCards error", e);
+    }
+  }
+
+  function exportSmartCSV() {
+    try {
+      const range =
+        (document.getElementById("smartRangeSelect") || {}).value || "7days";
+      const s = computeSmartStats(range);
+      const rows = [
+        ["orderId", "timestamp", "customerName", "total", "status", "items"],
+      ];
+      (s.raw || []).forEach((o) => {
+        rows.push([
+          o.orderId || "",
+          o.timestamp || "",
+          o.customerName || "",
+          o.total || 0,
+          o.status || "",
+          (o.items || [])
+            .map((i) => `${i.name} x${i.quantity || 1}`)
+            .join("; ") || "",
+        ]);
+      });
+      const csv = rows
+        .map((r) =>
+          r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","),
+        )
+        .join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders_${(window.BRANCH_DATA && window.BRANCH_DATA.slug) || "branch"}_${range}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showNotification("✅ تم تصدير CSV", "success");
+    } catch (e) {
+      console.warn("exportSmartCSV error", e);
+      showNotification("❌ فشل تصدير CSV", "error");
+    }
+  }
+
+  function initSmartDashboard() {
+    try {
+      const select = document.getElementById("smartRangeSelect");
+      const range = (select && select.value) || "7days";
+      updateSmartTopCards(range);
+      renderSmartCharts(range);
+
+      if (select) {
+        select.onchange = function () {
+          const r = this.value;
+          updateSmartTopCards(r);
+          renderSmartCharts(r);
+        };
+      }
+
+      document.addEventListener("branchDataUpdated", function () {
+        const r =
+          (document.getElementById("smartRangeSelect") || {}).value || "7days";
+        updateSmartTopCards(r);
+        renderSmartCharts(r);
+        try {
+          updateAdminStatistics();
+        } catch (e) {}
+      });
+
+      window.addEventListener("storage", function (e) {
+        try {
+          if (
+            typeof e.key === "string" &&
+            e.key.indexOf("branch_last_update_") === 0
+          ) {
+            const r =
+              (document.getElementById("smartRangeSelect") || {}).value ||
+              "7days";
+            updateSmartTopCards(r);
+            renderSmartCharts(r);
+            try {
+              updateAdminStatistics();
+            } catch (e) {}
+          }
+        } catch (err) {
+          /* ignore */
+        }
+      });
+
+      // Wire refresh and export buttons
+      try {
+        const refreshBtn = document.getElementById("smartRefreshBtn");
+        if (refreshBtn)
+          refreshBtn.addEventListener("click", function () {
+            const r =
+              (document.getElementById("smartRangeSelect") || {}).value ||
+              "7days";
+            updateSmartTopCards(r);
+            renderSmartCharts(r);
+            showNotification("✅ تم التحديث", "success");
+          });
+        const exportBtn = document.getElementById("smartExportBtn");
+        if (exportBtn)
+          exportBtn.addEventListener("click", function () {
+            exportSmartCSV();
+          });
+      } catch (e) {}
+    } catch (e) {
+      console.warn("initSmartDashboard error", e);
     }
   }
 

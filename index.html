@@ -1046,6 +1046,56 @@
                     </div>
                 </div>
 
+                <!-- Smart Analytics Dashboard -->
+                <div id="smart-dashboard" style="margin-bottom:28px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+                        <h3 style="margin:0; font-size:18px; font-weight:900; color:#1F2937;">📈 لوحة تحكم ذكية (Smart Analytics)</h3>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <label style="font-weight:700; color:#6B7280; font-size:13px; margin:0 6px 0 0;">الفترة:</label>
+                            <select id="smartRangeSelect" style="padding:8px 12px; border-radius:8px; border:1px solid #E5E7EB; font-weight:700; cursor:pointer;">
+                                <option value="today">اليوم</option>
+                                <option value="7days" selected>آخر 7 أيام</option>
+                                <option value="month">آخر شهر</option>
+                            </select>
+                            <button id="smartRefreshBtn" title="تحديث" style="padding:8px 10px; border-radius:8px; border:1px solid #E5E7EB; background:#fff; cursor:pointer; font-weight:700;">🔄</button>
+                            <button id="smartExportBtn" title="تصدير CSV" style="padding:8px 10px; border-radius:8px; border:1px solid #E5E7EB; background:linear-gradient(135deg,#FF6B35,#FF8E5F); color:white; cursor:pointer; font-weight:700;">تصدير CSV</button>
+                        </div>
+                    </div>
+
+                    <!-- Top 4 cards -->
+                    <div id="smartTopCards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px;">
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <div style="font-size:13px; color:#6B7280;">💰 إجمالي المبيعات</div>
+                            <div id="smartTotalSales" style="font-size:20px; font-weight:900; margin-top:6px;">0 ج.م</div>
+                        </div>
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <div style="font-size:13px; color:#6B7280;">📦 عدد الطلبات</div>
+                            <div id="smartOrderCount" style="font-size:20px; font-weight:900; margin-top:6px;">0</div>
+                        </div>
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <div style="font-size:13px; color:#6B7280;">🔥 الأكثر مبيعاً</div>
+                            <div id="smartBestSeller" style="font-size:18px; font-weight:900; margin-top:6px;">—</div>
+                        </div>
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <div style="font-size:13px; color:#6B7280;">📈 النمو اليومي</div>
+                            <div id="smartDailyGrowth" style="font-size:18px; font-weight:900; margin-top:6px;">0%</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div style="display:grid; grid-template-columns: 1fr 380px; gap:16px; align-items:start;">
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <h4 style="margin:0 0 10px 0; font-size:16px; font-weight:800;">مخطط الطلبات (آخر 7 أيام)</h4>
+                            <canvas id="ordersLineChart" height="160" role="img" aria-label="مخطط طلبات آخر 7 أيام" title="مخطط الطلبات حسب الأيام"></canvas>
+                        </div>
+
+                        <div style="background:white; padding:16px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06);">
+                            <h4 style="margin:0 0 10px 0; font-size:16px; font-weight:800;">توزيع المبيعات حسب الفئات</h4>
+                            <canvas id="salesPieChart" height="200" role="img" aria-label="مخطط توزيع المبيعات حسب الفئة" title="توزيع الإيرادات حسب الفئات"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tabs Navigation -->
                 <div style="display: flex; gap: 12px; margin-bottom: 30px; border-bottom: 2px solid #E5E7EB; padding-bottom: 0; flex-wrap: wrap;">
                     <button id="adminTabItems" onclick="switchAdminTab('items')" style="background: linear-gradient(135deg, #FF6B35, #FF8E5F); color: white; border: none; padding: 14px 28px; border-radius: 12px 12px 0 0; cursor: pointer; font-weight: 800; font-size: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 -4px 15px rgba(255, 107, 53, 0.2); letter-spacing: 0.3px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">📝 إدارة الأصناف</button>
@@ -1231,6 +1281,7 @@
     <!-- Firebase config is optional for basic functionality -->
     <script type="module" defer src="firebase-config.js"></script>
     <script defer src="google-sheets-integration.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <script defer src="script.js"></script>
     <script defer src="db-seed.js"></script>
     

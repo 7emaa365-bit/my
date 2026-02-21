@@ -298,6 +298,33 @@ header {
 .branches-row { gap: 20px; }
 
 /* --- Featured professional card (centered) --- */
+
+/* --- Smart Analytics Dashboard Styles --- */
+#smart-dashboard { margin-bottom: 24px; }
+#smart-dashboard h3 { font-size: 18px; color: var(--gray-800); }
+#smart-dashboard select, #smart-dashboard button { font-family: inherit; }
+#smartTopCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+#smartTopCards > div { background: linear-gradient(180deg, #fff, #fff); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); transition: transform 0.28s ease, box-shadow 0.28s ease; }
+#smartTopCards > div:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+#smartTopCards p, #smartTopCards div { direction: rtl; }
+#smartTopCards .stat-value { font-size: 20px; font-weight: 900; color: var(--gray-800); }
+
+#smart-dashboard canvas { width: 100% !important; height: auto !important; }
+
+.stat-small { font-size: 13px; color: #6B7280; }
+
+/* Buttons */
+#smart-dashboard button { border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: var(--transition); }
+#smart-dashboard button[title="تصدير CSV"] { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 8px 30px rgba(255,107,53,0.18); }
+#smart-dashboard button[title="تصدير CSV"]:hover { transform: translateY(-3px); }
+#smart-dashboard button[title="تحديث"] { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.04); }
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+    #smart-dashboard { padding: 8px 0; }
+    #smart-dashboard .stat-value { font-size: 18px; }
+}
+
 .center-featured-wrap {
     display: flex;
     justify-content: center;
