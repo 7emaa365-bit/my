@@ -250,6 +250,131 @@ header {
     50% { transform: translateY(-20px); }
 }
 
+/* --- Center content helper (for full-screen centered sections) --- */
+.center-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--header-height));
+    direction: rtl;
+    text-align: center;
+    padding: 40px 8%;
+    box-sizing: border-box;
+}
+
+.branches-center .branches-row {
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 40px;
+}
+
+/* Branch card refinements for professional layout */
+.branch-card {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.branch-card .branch-img img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.branch-card h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--gray-800);
+    margin-bottom: 8px;
+}
+
+.branch-meta {
+    color: #6B7280;
+    font-size: 14px;
+    margin: 2px 0;
+}
+
+.branches-row { gap: 20px; }
+
+/* --- Featured professional card (centered) --- */
+.center-featured-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 18px;
+}
+
+.featured-branch.professional {
+    width: 100%;
+    max-width: 760px;
+    background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+    padding: 26px 28px;
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(17,24,39,0.06);
+    border: 1px solid rgba(17,24,39,0.04);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.featured-branch.professional .featured-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(255,107,53,0.08);
+    flex-shrink: 0;
+}
+
+.featured-body { text-align: right; }
+.featured-title { font-size: 24px; font-weight: 900; color: var(--gray-800); margin: 0 0 6px; }
+.featured-tagline { color: #4B5563; margin: 6px 0 0; font-size: 15px; }
+
+@media (max-width: 700px) {
+    .featured-branch.professional { flex-direction: column; text-align: center; padding: 20px; }
+    .featured-body { text-align: center; }
+    .featured-branch.professional .featured-logo { width: 100px; height: 100px; }
+}
+
+/* --- Featured branch (centered card) --- */
+.featured-branch {
+    width: 100%;
+    max-width: 720px;
+    background: linear-gradient(180deg, #ffffff, #fffbf8);
+    padding: 28px 34px;
+    border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(17, 24, 39, 0.08);
+    border: 1px solid rgba(17,24,39,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto 18px;
+}
+
+.featured-logo {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(255,107,53,0.12);
+    margin-bottom: 14px;
+}
+
+.featured-branch h3 {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--gray-800);
+    margin: 0 0 6px;
+}
+
+.featured-branch .branch-meta {
+    color: #6B7280;
+    font-size: 15px;
+    margin: 0;
+}
+
 @keyframes shimmer {
     0%, 100% { background-position: -1000px 0; }
     100% { background-position: 1000px 0; }
@@ -788,46 +913,9 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* --- 12. Branches row: centered Flexbox, equal-size cards, horizontal scroll on overflow --- */
-.branches-row {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start; /* align cards to top so they have equal vertical start */
-    justify-content: center; /* keep group centered in the page */
-    gap: 24px; /* fixed spacing between cards */
-    padding: 12px 8px; /* breathing room */
-    overflow-x: auto; /* allow horizontal scrolling if there are more cards than fit */
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity; /* smooth snap behavior when scrolling */
-}
+.branches-row { gap: 20px; }
 
-.branches-row::-webkit-scrollbar { height: 10px; }
-.branches-row::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 8px; }
-
-/* Fixed-size cards: do NOT use width:100% on .branch-card */
-.branches-row .branch-card {
-    flex: 0 0 320px; /* fixed width, no shrinking */
-    width: 320px; /* ensure exact width */
-    height: 420px; /* fixed height so all cards match exactly */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    scroll-snap-align: center; /* card snaps to center when scrolling */
-}
-
-/* Make sure image area keeps exact height and doesn't shrink */
-.branches-row .branch-img { height: 180px; flex: 0 0 180px; }
-.branches-row .branch-img img { height: 100%; width: 100%; object-fit: cover; }
-
-/* Content area expands to fill remaining height and keeps layout consistent */
-.branches-row .branch-card > h3,
-.branches-row .branch-card > p { margin: 0 0 10px 0; }
-.branches-row .branch-card .branch-content { padding: 14px; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; }
-
-/* Note: Branch responsive styles moved to comprehensive media queries above */
-
-/* Branch image styling */
-.branch-img {
-    width: 100%;
+@keyframes shimmer {
     overflow: hidden;
     border-radius: 12px;
     margin-bottom: 14px;

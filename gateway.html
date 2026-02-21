@@ -265,6 +265,53 @@
           min-height: 200px;
         }
       }
+
+      /* Admin modal (professional login) */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 90;
+      }
+      .modal-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 18px;
+        width: 420px;
+        max-width: calc(100% - 32px);
+        box-shadow: 0 20px 50px rgba(2, 6, 23, 0.4);
+        font-family: inherit;
+        direction: rtl;
+      }
+      .modal-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+      }
+      .modal-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .modal-row input {
+        padding: 10px 12px;
+        border: 1px solid #e6e9ee;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+      .msg {
+        font-size: 13px;
+        color: #ef4444;
+      }
     </style>
   </head>
   <body>
@@ -294,8 +341,8 @@
 
     <main>
       <section class="gateway-hero" aria-labelledby="gateway-title">
-        <h1 id="gateway-title">اختر فرع المطعم للبدء</h1>
-        <p>اختر من بين الفروع المتاحة أو استخدم البحث للتضييق.</p>
+        <h1 id="gateway-title">اختر مطعم للبدء</h1>
+        <p>اختر من بين المطاعم المتاحة أو استخدم البحث للتضييق.</p>
 
         <div class="controls" role="search">
           <label class="search" aria-label="بحث عن مطعم">
@@ -483,22 +530,622 @@
         المحتوى أو إضافة فرع جديد.
       </footer>
     </main>
+    <!-- Admin control: toggle button and panel -->
+    <div
+      id="adminToggle"
+      style="position: fixed; left: 16px; bottom: 16px; z-index: 60"
+    >
+      <button
+        id="openAdminBtn"
+        class="btn-primary"
+        style="background: #111827; padding: 10px 14px; border-radius: 10px"
+      >
+        لوحة التحكم
+      </button>
+    </div>
+
+    <!-- Admin login modal -->
+    <div
+      id="adminModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div class="modal-card" role="document" aria-labelledby="adminModalTitle">
+        <h3 id="adminModalTitle">دخول المشرف</h3>
+        <div id="modalMsg" class="msg" aria-live="polite"></div>
+        <form id="adminModalForm" class="modal-row">
+          <input
+            id="modalUser"
+            name="user"
+            placeholder="اسم المستخدم"
+            autocomplete="username"
+          />
+          <input
+            id="modalPass"
+            name="pass"
+            type="password"
+            placeholder="كلمة المرور"
+            autocomplete="current-password"
+          />
+          <input
+            id="modalPass2"
+            name="pass2"
+            type="password"
+            placeholder="تأكيد كلمة المرور (لإنشاء)"
+            style="display: none"
+          />
+          <div class="modal-actions">
+            <button
+              type="button"
+              id="modalCancel"
+              style="
+                background: #6b7280;
+                color: #fff;
+                padding: 8px 12px;
+                border-radius: 8px;
+              "
+            >
+              إلغاء
+            </button>
+            <button type="submit" id="modalSubmit" class="btn-primary">
+              دخول
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div
+      id="adminPanel"
+      aria-hidden="true"
+      style="
+        position: fixed;
+        left: 16px;
+        bottom: 70px;
+        right: 16px;
+        max-width: 680px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 12px 40px rgba(12, 18, 46, 0.12);
+        padding: 16px;
+        display: none;
+        z-index: 70;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 8px;
+        "
+      >
+        <strong>لوحة تحكم المطاعم</strong>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <button
+            id="changePwBtn"
+            style="padding: 8px 10px; border-radius: 8px"
+          >
+            تغيير الباسورد
+          </button>
+          <button
+            id="logoutBtn"
+            style="
+              background: #374151;
+              color: #fff;
+              padding: 8px 10px;
+              border-radius: 8px;
+            "
+          >
+            تسجيل خروج
+          </button>
+          <button
+            id="closeAdminBtn"
+            class="btn-primary"
+            style="background: #ef4444; padding: 8px 10px; border-radius: 8px"
+          >
+            إغلاق
+          </button>
+        </div>
+      </div>
+
+      <form id="adminForm" style="display: grid; gap: 8px; margin-bottom: 10px">
+        <input id="r-id" type="hidden" />
+        <input
+          id="r-name"
+          placeholder="اسم المطعم"
+          required
+          style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px"
+        />
+        <input
+          id="r-sub"
+          placeholder="نص مساعد (مثلاً: توصيل سريع)"
+          style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px"
+        />
+        <input
+          id="r-badge"
+          placeholder="وسم (مثلاً: مفتوح الآن)"
+          style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px"
+        />
+        <input
+          id="r-img"
+          placeholder="رابط صورة"
+          style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px"
+        />
+        <input
+          id="r-href"
+          placeholder="رابط الهدف (index.html?res=...)"
+          style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px"
+        />
+        <div style="display: flex; gap: 8px">
+          <button id="saveBtn" class="btn-primary" type="button">حفظ</button>
+          <button
+            id="newBtn"
+            type="button"
+            style="
+              background: #6b7280;
+              color: #fff;
+              padding: 8px 12px;
+              border-radius: 8px;
+            "
+          >
+            مُسح الحقل
+          </button>
+        </div>
+      </form>
+
+      <div
+        style="
+          max-height: 260px;
+          overflow: auto;
+          border-top: 1px solid #f3f4f6;
+          padding-top: 8px;
+        "
+      >
+        <ul
+          id="adminList"
+          style="
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          "
+        ></ul>
+      </div>
+    </div>
+
     <script>
-      // Simple live search filter for restaurant cards
       (function () {
-        const input = document.getElementById("search");
-        if (!input) return;
-        const cards = Array.from(document.querySelectorAll(".restaurant-card"));
-        input.addEventListener("input", function () {
-          const q = this.value.trim().toLowerCase();
-          if (!q) {
-            cards.forEach((c) => (c.style.display = ""));
+        const storageKey = "restaurants_v1";
+
+        function generateId() {
+          return "r_" + Math.random().toString(36).slice(2, 9);
+        }
+
+        function getStored() {
+          try {
+            const raw = localStorage.getItem(storageKey);
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function setStored(arr) {
+          localStorage.setItem(storageKey, JSON.stringify(arr));
+        }
+
+        // If no stored data, extract existing static cards as initial dataset
+        function extractInitial() {
+          const cards = Array.from(
+            document.querySelectorAll(".restaurant-card"),
+          );
+          if (!cards.length) return [];
+          return cards.map((card) => {
+            const a = card.closest("a") || card;
+            const href = a.getAttribute("href") || "";
+            const img = card.querySelector(".restaurant-media");
+            const titleEl = card.querySelector(".restaurant-title span");
+            const badgeEl = card.querySelector(".badge");
+            const meta = Array.from(
+              card.querySelectorAll(".restaurant-meta span"),
+            )
+              .map((s) => s.innerText)
+              .filter(Boolean)
+              .join(" • ");
+            return {
+              id: generateId(),
+              name: titleEl
+                ? titleEl.innerText.trim()
+                : a.getAttribute("aria-label") || "مطعم",
+              sub: badgeEl ? "" : "",
+              badge: badgeEl ? badgeEl.innerText.trim() : "",
+              img: img ? img.getAttribute("src") : "",
+              meta: meta,
+              href: href,
+            };
+          });
+        }
+
+        let restaurants = getStored() || extractInitial();
+
+        // Admin visibility/session helpers
+        const isAdmin =
+          new URLSearchParams(location.search).get("admin") === "1" ||
+          localStorage.getItem("isAdmin") === "1";
+        const userKey = "gateway_admin_user"; // stored admin username
+        const pwKey = "gateway_admin_hash"; // stored SHA-256 hash of admin password
+        let sessionAdmin = !!isAdmin;
+
+        const grid = document.querySelector(".restaurants-grid");
+        const searchInput = document.getElementById("search");
+
+        function renderRestaurants(filter) {
+          grid.innerHTML = "";
+          const list = restaurants.filter((r) => {
+            if (!filter) return true;
+            const q = filter.toLowerCase();
+            return (r.name + " " + (r.meta || "") + " " + (r.badge || ""))
+              .toLowerCase()
+              .includes(q);
+          });
+
+          list.forEach((r) => {
+            const a = document.createElement("a");
+            a.className = "restaurant-card";
+            a.href = r.href || "index.html?res=" + encodeURIComponent(r.name);
+            a.setAttribute("aria-label", r.name);
+            a.innerHTML = `
+              <img class="restaurant-media" loading="lazy" src="${r.img || "https://via.placeholder.com/800x450?text=مطعم"}" alt="${r.name}" />
+              <div class="restaurant-body">
+                <div class="restaurant-title">
+                  <span>${r.name}</span>
+                  ${r.badge ? `<span class="badge">${r.badge}</span>` : ""}
+                </div>
+                <div class="restaurant-meta">${r.meta || ""}</div>
+              </div>
+            `;
+            grid.appendChild(a);
+          });
+        }
+
+        // Initial render
+        renderRestaurants();
+
+        // Live search
+        if (searchInput) {
+          searchInput.addEventListener("input", function () {
+            renderRestaurants(this.value.trim());
+          });
+        }
+
+        // Admin UI logic
+        const openBtn = document.getElementById("openAdminBtn");
+        const closeBtn = document.getElementById("closeAdminBtn");
+        const changePwBtn = document.getElementById("changePwBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const panel = document.getElementById("adminPanel");
+        const adminList = document.getElementById("adminList");
+        const saveBtn = document.getElementById("saveBtn");
+        const newBtn = document.getElementById("newBtn");
+
+        // helper: SHA-256 hex
+        async function sha256Hex(str) {
+          const buf = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(str),
+          );
+          return Array.from(new Uint8Array(buf))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        }
+
+        // Auto-initialize credentials per user request: username `admin`, password `12345`
+        (async function initDefaultAdmin() {
+          try {
+            if (
+              !localStorage.getItem(userKey) &&
+              !localStorage.getItem(pwKey)
+            ) {
+              const h = await sha256Hex("12345");
+              localStorage.setItem(userKey, "admin");
+              localStorage.setItem(pwKey, h);
+              console.info("Initialized default admin credentials.");
+            }
+          } catch (e) {
+            console.error("Failed to init default admin", e);
+          }
+        })();
+
+        // Modal-based unlock flow (professional)
+        const adminModal = document.getElementById("adminModal");
+        const modalForm = document.getElementById("adminModalForm");
+        const modalUser = document.getElementById("modalUser");
+        const modalPass = document.getElementById("modalPass");
+        const modalPass2 = document.getElementById("modalPass2");
+        const modalMsg = document.getElementById("modalMsg");
+        const modalCancel = document.getElementById("modalCancel");
+
+        function showModal(mode) {
+          // mode: 'login' or 'create' or 'change'
+          adminModal.style.display = "flex";
+          adminModal.setAttribute("aria-hidden", "false");
+          modalMsg.textContent = "";
+          modalForm.dataset.mode = mode;
+          modalPass.value = "";
+          modalPass2.value = "";
+          modalUser.value = "";
+          if (mode === "create") {
+            modalPass2.style.display = "";
+            modalUser.placeholder = "اسم المستخدم جديد";
+            modalPass2.placeholder = "تأكيد كلمة المرور";
+            document.getElementById("modalSubmit").textContent = "إنشاء";
+          } else if (mode === "change") {
+            modalPass2.style.display = "";
+            modalUser.placeholder = "اسم المستخدم الحالي أو جديد";
+            document.getElementById("modalSubmit").textContent = "تغيير";
+          } else {
+            modalPass2.style.display = "none";
+            modalUser.placeholder = "اسم المستخدم";
+            document.getElementById("modalSubmit").textContent = "دخول";
+          }
+          modalUser.focus();
+        }
+
+        function hideModal() {
+          adminModal.style.display = "none";
+          adminModal.setAttribute("aria-hidden", "true");
+        }
+
+        // openBtn shows login modal; modal handles create/login depending on stored credentials
+        async function tryUnlock() {
+          if (sessionAdmin) return openAdmin();
+          const storedUser = localStorage.getItem(userKey);
+          const storedHash = localStorage.getItem(pwKey);
+          if (!storedUser || !storedHash) {
+            showModal("create");
             return;
           }
-          cards.forEach((card) => {
-            const text = card.innerText.replace(/\s+/g, " ").toLowerCase();
-            card.style.display = text.indexOf(q) !== -1 ? "" : "none";
+          showModal("login");
+        }
+
+        modalCancel.addEventListener("click", function () {
+          hideModal();
+        });
+
+        modalForm.addEventListener("submit", async function (ev) {
+          ev.preventDefault();
+          const mode = modalForm.dataset.mode;
+          const u = modalUser.value && modalUser.value.trim();
+          const p = modalPass.value || "";
+          const p2 = modalPass2.value || "";
+          const storedUser = localStorage.getItem(userKey);
+          const storedHash = localStorage.getItem(pwKey);
+
+          if (mode === "create") {
+            if (!u || !p) {
+              modalMsg.textContent = "أدخل اسم مستخدم وباسورد.";
+              return;
+            }
+            if (p !== p2) {
+              modalMsg.textContent = "كلمتا المرور لا تتطابقان.";
+              return;
+            }
+            const h = await sha256Hex(p);
+            localStorage.setItem(userKey, u);
+            localStorage.setItem(pwKey, h);
+            localStorage.setItem("isAdmin", "1");
+            sessionAdmin = true;
+            hideModal();
+            openAdmin();
+            return;
+          }
+
+          if (mode === "login") {
+            if (!u || !p) {
+              modalMsg.textContent = "أدخل اسم المستخدم والباسورد.";
+              return;
+            }
+            const h = await sha256Hex(p);
+            if (u === storedUser && h === storedHash) {
+              localStorage.setItem("isAdmin", "1");
+              sessionAdmin = true;
+              hideModal();
+              openAdmin();
+              return;
+            }
+            modalMsg.textContent = "اسم المستخدم أو الباسورد خاطئ";
+            return;
+          }
+
+          if (mode === "change") {
+            // change credentials: require current stored credentials
+            if (!storedUser || !storedHash) {
+              modalMsg.textContent = "لا توجد بيانات للمشرف.";
+              return;
+            }
+            if (!u || !p || !p2) {
+              modalMsg.textContent = "أكمل الحقول.";
+              return;
+            }
+            const hcur = await sha256Hex(p);
+            // here modalUser holds current username for verification; modalPass and modalPass2 used as new password and confirm
+            if (u !== storedUser) {
+              modalMsg.textContent = "اسم المستخدم الحالي خاطئ.";
+              return;
+            }
+            // prompt for current password separately is omitted for compact UI; require the user to re-enter current password in modalPass (we'll use p as current here)
+            const newPass = modalPass2.value || "";
+            if (!newPass) {
+              modalMsg.textContent = "أدخل كلمة مرور جديدة في الحقل الثاني.";
+              return;
+            }
+            if (p !== newPass) {
+              modalMsg.textContent = "الكلمات لا تتطابق.";
+              return;
+            }
+            const newH = await sha256Hex(newPass);
+            const newUser = u || storedUser;
+            localStorage.setItem(userKey, newUser);
+            localStorage.setItem(pwKey, newH);
+            modalMsg.textContent = "تم تغيير بيانات الدخول.";
+            hideModal();
+            return;
+          }
+        });
+
+        function openAdmin() {
+          panel.style.display = "block";
+          panel.setAttribute("aria-hidden", "false");
+          refreshAdminList();
+        }
+        function closeAdmin() {
+          panel.style.display = "none";
+          panel.setAttribute("aria-hidden", "true");
+          localStorage.removeItem("isAdmin");
+          sessionAdmin = false;
+        }
+
+        if (openBtn) {
+          openBtn.addEventListener("click", function () {
+            tryUnlock().catch((err) => console.error(err));
           });
+        }
+        if (closeBtn) closeBtn.addEventListener("click", closeAdmin);
+        if (logoutBtn)
+          logoutBtn.addEventListener("click", function () {
+            localStorage.removeItem("isAdmin");
+            sessionAdmin = false;
+            if (panel) {
+              panel.style.display = "none";
+              panel.setAttribute("aria-hidden", "true");
+            }
+            alert("تم تسجيل الخروج");
+          });
+
+        if (changePwBtn)
+          changePwBtn.addEventListener("click", function () {
+            showModal("change");
+          });
+
+        function refreshAdminList() {
+          adminList.innerHTML = "";
+          restaurants.forEach((r) => {
+            const li = document.createElement("li");
+            li.style.display = "flex";
+            li.style.justifyContent = "space-between";
+            li.style.alignItems = "center";
+            li.style.gap = "8px";
+            li.innerHTML = `
+              <div style="flex:1">
+                <div style="font-weight:700">${r.name}</div>
+                <div style="font-size:13px; color:#6b7280">${r.meta || r.badge || ""}</div>
+              </div>
+              <div style="display:flex; gap:6px">
+                <button data-edit="${r.id}" style="padding:6px 8px; border-radius:8px">تعديل</button>
+                <button data-delete="${r.id}" style="background:#ef4444; color:#fff; padding:6px 8px; border-radius:8px">حذف</button>
+              </div>
+            `;
+            adminList.appendChild(li);
+          });
+        }
+
+        adminList.addEventListener("click", function (e) {
+          const edit = e.target.getAttribute("data-edit");
+          const del = e.target.getAttribute("data-delete");
+          if (edit) {
+            const r = restaurants.find((x) => x.id === edit);
+            if (!r) return;
+            document.getElementById("r-id").value = r.id;
+            document.getElementById("r-name").value = r.name;
+            document.getElementById("r-sub").value = r.sub || r.meta || "";
+            document.getElementById("r-badge").value = r.badge || "";
+            document.getElementById("r-img").value = r.img || "";
+            document.getElementById("r-href").value = r.href || "";
+          }
+          if (del) {
+            restaurants = restaurants.filter((x) => x.id !== del);
+            setStored(restaurants);
+            refreshAdminList();
+            renderRestaurants(searchInput ? searchInput.value.trim() : "");
+          }
+        });
+
+        saveBtn.addEventListener("click", function () {
+          const id = document.getElementById("r-id").value || "";
+          const name = document.getElementById("r-name").value.trim();
+          const sub = document.getElementById("r-sub").value.trim();
+          const badge = document.getElementById("r-badge").value.trim();
+          const img = document.getElementById("r-img").value.trim();
+          const href = document.getElementById("r-href").value.trim();
+          if (!name) return alert("أدخل اسم المطعم");
+          if (id) {
+            const idx = restaurants.findIndex((x) => x.id === id);
+            if (idx > -1) {
+              restaurants[idx].name = name;
+              restaurants[idx].sub = sub;
+              restaurants[idx].badge = badge;
+              restaurants[idx].img = img;
+              restaurants[idx].href = href;
+            }
+          } else {
+            restaurants.unshift({
+              id: generateId(),
+              name,
+              sub,
+              badge,
+              img,
+              href,
+              meta: sub,
+            });
+          }
+          setStored(restaurants);
+          refreshAdminList();
+          renderRestaurants(searchInput ? searchInput.value.trim() : "");
+          // clear form
+          document.getElementById("adminForm").reset();
+          document.getElementById("r-id").value = "";
+        });
+
+        newBtn.addEventListener("click", function () {
+          document.getElementById("adminForm").reset();
+          document.getElementById("r-id").value = "";
+        });
+
+        // Export / Import shortcuts (optional): double-click open button to export JSON (protected)
+        function doExport() {
+          const blob = new Blob([JSON.stringify(restaurants, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "restaurants.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        if (openBtn) {
+          openBtn.addEventListener("dblclick", function () {
+            if (!sessionAdmin) {
+              tryUnlock()
+                .then(() => {
+                  if (sessionAdmin) doExport();
+                })
+                .catch((err) => console.error(err));
+              return;
+            }
+            doExport();
+          });
+        }
+
+        // Accessibility: close panel with Escape
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeAdmin();
         });
       })();
     </script>

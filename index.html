@@ -522,7 +522,7 @@
                         </ul>
 
                         <div style="display:flex; gap:10px; margin-top:18px;">
-                            <a id="contactWaButton" href="https://wa.me/201021279663" target="_blank" class="main-btn" style="background:linear-gradient(135deg,#25d366,#16a34a); padding:10px 14px; border-radius:10px; color:white; text-decoration:none; font-weight:700;">💬 تواصل عبر واتساب</a>
+                            <a id="contactWaButton" href="#" target="_blank" class="main-btn" style="background:linear-gradient(135deg,#25d366,#16a34a); padding:10px 14px; border-radius:10px; color:white; text-decoration:none; font-weight:700;">💬 تواصل عبر واتساب</a>
                             <a id="contactMailButton" href="mailto:ibra7im.engineer@gmail.com" class="main-btn" style="background:linear-gradient(135deg,#FF6B35,#FF8E5F); padding:10px 14px; border-radius:10px; color:white; text-decoration:none; font-weight:700;">✉️ إرسال بريد إلكتروني</a>
                         </div>
 
@@ -613,7 +613,7 @@
                                         encodeURIComponent('البريد: ' + document.getElementById('contact_email').value + '\n') +
                                         encodeURIComponent('الهاتف: ' + document.getElementById('contact_phone').value + '\n\n') +
                                         encodeURIComponent(document.getElementById('contact_message').value);
-                                    const phoneForWhats = (window.BRANCH_DATA && window.BRANCH_DATA.phone) || localStorage.getItem('restaurantPhone') || '201021279663';
+                                    const phoneForWhats = (window.BRANCH_DATA && window.BRANCH_DATA.phone) || localStorage.getItem('restaurant_phone') || '201021279663';
                                     const url = 'https://wa.me/' + phoneForWhats + '?text=' + text;
                                     window.open(url, '_blank');
                                     feedback.style.display='block'; feedback.textContent='تم فتح واتساب لإرسال الرسالة';

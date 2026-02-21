@@ -404,7 +404,7 @@
         localStorage.getItem("restaurantEmail") ||
         (rest && rest.email) ||
         "ibra7im.engineer@gmail.com",
-      phone: localStorage.getItem("restaurantPhone") || "201021279663",
+      phone: localStorage.getItem("restaurant_phone") || "201021279663",
       menu:
         typeof MASTER_MENU !== "undefined"
           ? JSON.parse(JSON.stringify(MASTER_MENU))
@@ -486,7 +486,7 @@
       try {
         const branchPhone =
           (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
-          localStorage.getItem("restaurantPhone") ||
+          localStorage.getItem("restaurant_phone") ||
           "201021279663";
         const branchEmail =
           (window.BRANCH_DATA && window.BRANCH_DATA.email) ||
@@ -563,10 +563,48 @@
   let allOrders = JSON.parse(localStorage.getItem("allOrders")) || []; // جميع الأوردرات من جميع العملاء
   const SHIPPING_FEE = 20; // قيمة التوصيل ثابتة
   // Telephone for the current branch
-  let RESTAURANT_PHONE =
-    (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
-    localStorage.getItem("restaurantPhone") ||
-    "201021279663"; // رقم المطعم
+  // دالة مساعدة للحصول على رقم هاتف الفرع من localStorage بمفتاح فريد
+  function getRestaurantPhoneKey() {
+    return "res_phone_" + window.CURRENT_RESTAURANT;
+  }
+
+  function getRestaurantPhone() {
+    // أولاً: حاول الحصول على الرقم من المفتاح الفريد للفرع الحالي
+    const uniqueKey = getRestaurantPhoneKey();
+    let phone = localStorage.getItem(uniqueKey);
+    if (phone) return phone;
+
+    // ثانياً: حاول الحصول على الرقم من بيانات الفرع
+    if (window.BRANCH_DATA && window.BRANCH_DATA.phone) {
+      return window.BRANCH_DATA.phone;
+    }
+
+    // ثالثاً: استخدم المفتاح القديم للتوافقية
+    phone = localStorage.getItem("restaurant_phone");
+    if (phone) return phone;
+
+    // أخيراً: الرقم الافتراضي
+    return "201021279663";
+  }
+
+  function saveRestaurantPhone(phone) {
+    const uniqueKey = getRestaurantPhoneKey();
+    // احفظ بالمفتاح الفريد للفرع
+    localStorage.setItem(uniqueKey, phone);
+    // احتفظ أيضاً بالمفتاح القديم للتوافقية
+    localStorage.setItem("restaurant_phone", phone);
+    // حدّث بيانات الفرع إن وُجدت
+    if (window.BRANCH_DATA) {
+      window.BRANCH_DATA.phone = phone;
+      saveBranchData(window.BRANCH_DATA);
+    }
+    // حدّث المتغير العام
+    RESTAURANT_PHONE = phone;
+    return true;
+  }
+
+  // Telephone for the current branch
+  let RESTAURANT_PHONE = getRestaurantPhone();
   // Email for the current branch
   let RESTAURANT_EMAIL =
     (window.BRANCH_DATA && window.BRANCH_DATA.email) ||
@@ -606,6 +644,10 @@
   const Validator = {
     isValidName(name) {
       return name && name.length >= 3 && name.length <= 100;
+    },
+    isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
     },
     isValidPhone(phone) {
       // صيغة مصرية: 201XXXXXXXXX (11 رقم)
@@ -1043,7 +1085,8 @@
       );
 
       const restaurantEncoded = encodeURIComponent(restaurantMessage);
-      const whatsappUrl = `https://wa.me/${RESTAURANT_PHONE}?text=${restaurantEncoded}`;
+      const phoneToUse = getRestaurantPhone();
+      const whatsappUrl = `https://wa.me/${phoneToUse}?text=${restaurantEncoded}`;
 
       console.log(
         "✅ تم بناء رابط WhatsApp:",
@@ -1074,7 +1117,7 @@
         timestamp: new Date().toISOString(),
         status: "sent",
         recipient: "restaurant",
-        phone: RESTAURANT_PHONE,
+        phone: phoneToUse,
         url: whatsappUrl,
         messageLength: restaurantMessage.length,
       };
@@ -2566,7 +2609,11 @@
     // إرسال الرسالة
     console.log("📲 إرسال الطلب المتكرر للمطعم...");
     const restaurantEncoded = encodeURIComponent(restaurantMessage);
-    const whatsappUrl = `https://wa.me/${RESTAURANT_PHONE}?text=${restaurantEncoded}`;
+    const phoneToUse =
+      (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
+      localStorage.getItem("restaurant_phone") ||
+      RESTAURANT_PHONE;
+    const whatsappUrl = `https://wa.me/${phoneToUse}?text=${restaurantEncoded}`;
 
     console.log("🌐 رابط WhatsApp:", whatsappUrl);
     console.log("📱 رقم المطعم:", RESTAURANT_PHONE);
@@ -2859,7 +2906,7 @@
         window.BRANCH_DATA.phone = formattedPhone;
         saveBranchData(window.BRANCH_DATA);
       } else {
-        localStorage.setItem("restaurantPhone", formattedPhone);
+        localStorage.setItem("restaurant_phone", formattedPhone);
       }
       console.log("💾 تم حفظ الرقم في إعدادات الفرع بنجاح:", formattedPhone);
     } catch (e) {
@@ -2894,209 +2941,238 @@
 
     // Inject Branch Settings panel into admin area (if not already present)
     try {
-      const adminRoot =
-        document.getElementById("admin-page") ||
-        document.querySelector(".page") ||
-        document.body;
-      let settingsPanel = document.getElementById("branchSettingsPanel");
-      if (!settingsPanel) {
-        settingsPanel = document.createElement("div");
-        settingsPanel.id = "branchSettingsPanel";
-        settingsPanel.style.cssText =
-          "background:white; padding:16px; border-radius:12px; margin-bottom:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);";
-        // Insert at top of admin root
-        if (adminRoot && adminRoot.firstChild)
-          adminRoot.insertBefore(settingsPanel, adminRoot.firstChild);
-        else
-          document.body.insertBefore(settingsPanel, document.body.firstChild);
-      }
+      // Disabled per user request: do not inject '⚙️ إعدادات الفرع' UI
+      if (false) {
+        const adminRoot =
+          document.getElementById("admin-page") ||
+          document.querySelector(".page") ||
+          document.body;
+        let settingsPanel = document.getElementById("branchSettingsPanel");
+        if (!settingsPanel) {
+          settingsPanel = document.createElement("div");
+          settingsPanel.id = "branchSettingsPanel";
+          settingsPanel.style.cssText =
+            "background:white; padding:16px; border-radius:12px; margin-bottom:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06);";
+          // Insert at top of admin root
+          if (adminRoot && adminRoot.firstChild)
+            adminRoot.insertBefore(settingsPanel, adminRoot.firstChild);
+          else
+            document.body.insertBefore(settingsPanel, document.body.firstChild);
+        }
 
-      // Build inner HTML for settings (simple, robust inputs)
-      settingsPanel.innerHTML = `
-        <h3 style="margin:0 0 10px; font-size:18px; color:#2C3E50;">⚙️ إعدادات الفرع</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-          <div>
-            <label style="font-weight:700; display:block; margin-bottom:6px;">اسم الفرع</label>
-            <input id="branchNameInput" placeholder="اسم الفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-          <div>
-            <label style="font-weight:700; display:block; margin-bottom:6px;">رقم واتساب الفرع</label>
-            <input id="branchWhatsappInput" placeholder="2010..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-          <div>
-            <label style="font-weight:700; display:block; margin-bottom:6px;">بريد التواصل للفرع</label>
-            <input id="branchEmailInput" placeholder="you@domain.com" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-          <div>
-            <label style="font-weight:700; display:block; margin-bottom:6px;">رابط لوجو الفرع</label>
-            <input id="branchLogoInput" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-          <div>
-            <label style="font-weight:700; display:block; margin-bottom:6px;">ساعات العمل</label>
-            <input id="branchHoursInput" placeholder="مثال: 10:00 - 23:00" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-          <div style="grid-column:1/-1;">
-            <label style="font-weight:700; display:block; margin-bottom:6px;">وصف الفرع</label>
-            <textarea id="branchDescInput" placeholder="وصف قصير للفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE; min-height:60px;"></textarea>
-          </div>
-          <div style="grid-column:1/-1;">
-            <label style="font-weight:700; display:block; margin-bottom:6px;">روابط التواصل (JSON أو comma-separated)</label>
-            <input id="branchSocialInput" placeholder='مثال: {"instagram":"https://...","facebook":"https://..."} أو instagram,facebook' style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:12px; justify-content:flex-end;">
-          <button id="saveBranchSettingsBtn" style="background:linear-gradient(135deg,#FF6B35,#FF8E5F); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">حفظ بيانات الفرع</button>
-          <button id="resetBranchToMasterBtn" style="background:#F3F4F6; color:#333; border:1px solid #E6E9EE; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600;">تهيئة المنيو الافتراضي</button>
-        </div>
-        <div id="branchReportsContainer" style="margin-top:14px;"></div>
-      `;
+      //   // Build inner HTML for settings (simple, robust inputs)
+      //   settingsPanel.innerHTML = `
+      //   <h3 style="margin:0 0 10px; font-size:18px; color:#2C3E50;">⚙️ إعدادات الفرع</h3>
+      //   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+      //     <div>
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">اسم الفرع</label>
+      //       <input id="branchNameInput" placeholder="اسم الفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+      //     </div>
+      //     <div>
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">رقم واتساب الفرع</label>
+      //       <input id="branchWhatsappInput" placeholder="2010..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" oninput="saveRestaurantPhone(this.value)" />
+      //     </div>
+      //     <div>
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">بريد التواصل للفرع</label>
+      //       <input id="branchEmailInput" placeholder="you@domain.com" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+      //     </div>
+      //     <div>
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">رابط لوجو الفرع</label>
+      //       <input id="branchLogoInput" placeholder="https://..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+      //     </div>
+      //     <div>
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">ساعات العمل</label>
+      //       <input id="branchHoursInput" placeholder="مثال: 10:00 - 23:00" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+      //     </div>
+      //     <div style="grid-column:1/-1;">
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">وصف الفرع</label>
+      //       <textarea id="branchDescInput" placeholder="وصف قصير للفرع" style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE; min-height:60px;"></textarea>
+      //     </div>
+      //     <div style="grid-column:1/-1;">
+      //       <label style="font-weight:700; display:block; margin-bottom:6px;">روابط التواصل (JSON أو comma-separated)</label>
+      //       <input id="branchSocialInput" placeholder='مثال: {"instagram":"https://...","facebook":"https://..."} أو instagram,facebook' style="width:100%; padding:8px; border-radius:8px; border:1px solid #E6E9EE;" />
+      //     </div>
+      //   </div>
+      //   <div style="display:flex; gap:10px; margin-top:12px; justify-content:flex-end;">
+      //     <button id="previewBranchSettingsBtn" style="background:#10B981; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">عرض فوري</button>
+      //     <button id="saveBranchSettingsBtn" style="background:linear-gradient(135deg,#FF6B35,#FF8E5F); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700;">حفظ بيانات الفرع</button>
+      //     <button id="resetBranchToMasterBtn" style="background:#F3F4F6; color:#333; border:1px solid #E6E9EE; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600;">تهيئة المنيو الافتراضي</button>
+      //   </div>
+      //   <div id="branchReportsContainer" style="margin-top:14px;"></div>
+      // `;
 
-      // Populate the fields from BRANCH_DATA
-      document.getElementById("branchNameInput").value =
-        window.BRANCH_DATA.name || "";
-      document.getElementById("branchWhatsappInput").value =
-        window.BRANCH_DATA.phone || "";
-      document.getElementById("branchEmailInput").value =
-        window.BRANCH_DATA.email || "";
-      document.getElementById("branchLogoInput").value =
-        window.BRANCH_DATA.logo || "";
-      document.getElementById("branchHoursInput").value =
-        window.BRANCH_DATA.hours || "";
-      document.getElementById("branchDescInput").value =
-        window.BRANCH_DATA.description || "";
-      document.getElementById("branchSocialInput").value =
-        typeof window.BRANCH_DATA.social === "object"
-          ? JSON.stringify(window.BRANCH_DATA.social)
-          : window.BRANCH_DATA.social || "";
+        // Populate the fields from BRANCH_DATA
+        document.getElementById("branchNameInput").value =
+          window.BRANCH_DATA.name || "";
+        document.getElementById("branchWhatsappInput").value =
+          window.BRANCH_DATA.phone || "";
+        document.getElementById("branchEmailInput").value =
+          window.BRANCH_DATA.email || "";
+        document.getElementById("branchLogoInput").value =
+          window.BRANCH_DATA.logo || "";
+        document.getElementById("branchHoursInput").value =
+          window.BRANCH_DATA.hours || "";
+        document.getElementById("branchDescInput").value =
+          window.BRANCH_DATA.description || "";
+        document.getElementById("branchSocialInput").value =
+          typeof window.BRANCH_DATA.social === "object"
+            ? JSON.stringify(window.BRANCH_DATA.social)
+            : window.BRANCH_DATA.social || "";
 
-      // Save handler
-      document.getElementById("saveBranchSettingsBtn").onclick = function () {
-        const name =
-          document.getElementById("branchNameInput").value.trim() ||
-          window.BRANCH_DATA.name;
-        let phone =
-          document.getElementById("branchWhatsappInput").value.trim() ||
-          window.BRANCH_DATA.phone ||
-          "";
-        const email =
-          document.getElementById("branchEmailInput").value.trim() ||
-          window.BRANCH_DATA.email ||
-          "";
-        const logo =
-          document.getElementById("branchLogoInput").value.trim() ||
-          window.BRANCH_DATA.logo;
-        const hours =
-          document.getElementById("branchHoursInput").value.trim() ||
-          window.BRANCH_DATA.hours;
-        const desc =
-          document.getElementById("branchDescInput").value.trim() ||
-          window.BRANCH_DATA.description;
-        const socialRaw = document
-          .getElementById("branchSocialInput")
-          .value.trim();
+        // Save handler
+        document.getElementById("saveBranchSettingsBtn").onclick = function () {
+          const name =
+            document.getElementById("branchNameInput").value.trim() ||
+            window.BRANCH_DATA.name;
+          let phone =
+            document.getElementById("branchWhatsappInput").value.trim() ||
+            window.BRANCH_DATA.phone ||
+            "";
+          const email =
+            document.getElementById("branchEmailInput").value.trim() ||
+            window.BRANCH_DATA.email ||
+            "";
+          const logo =
+            document.getElementById("branchLogoInput").value.trim() ||
+            window.BRANCH_DATA.logo;
+          const hours =
+            document.getElementById("branchHoursInput").value.trim() ||
+            window.BRANCH_DATA.hours;
+          const desc =
+            document.getElementById("branchDescInput").value.trim() ||
+            window.BRANCH_DATA.description;
+          const socialRaw = document
+            .getElementById("branchSocialInput")
+            .value.trim();
 
-        // --- Validation & normalization ---
-        try {
-          // Normalize phone to Egyptian international form without + (e.g. 2010########)
-          let phoneDigits = (phone || "").replace(/\D/g, "");
-          if (phoneDigits.startsWith("0") && phoneDigits.length === 11) {
-            phoneDigits = "20" + phoneDigits.slice(1);
-          } else if (phoneDigits.length === 9 && phoneDigits.startsWith("1")) {
-            phoneDigits = "20" + phoneDigits;
-          }
-          // If still looks like local '2010...' accept, else try to leave as-is
-          if (!Validator.isValidPhone(phoneDigits)) {
+          // --- Validation & normalization ---
+          try {
+            // Normalize phone to Egyptian international form without + (e.g. 2010########)
+            let phoneDigits = (phone || "").replace(/\D/g, "");
+            if (phoneDigits.startsWith("0") && phoneDigits.length === 11) {
+              phoneDigits = "20" + phoneDigits.slice(1);
+            } else if (
+              phoneDigits.length === 9 &&
+              phoneDigits.startsWith("1")
+            ) {
+              phoneDigits = "20" + phoneDigits;
+            }
+            // If still looks like local '2010...' accept, else try to leave as-is
+            if (!Validator.isValidPhone(phoneDigits)) {
+              showNotification(
+                "⚠️ رقم واتساب الفرع غير صحيح. أدخل رقم مصري مثل 01012345678 أو 201012345678",
+                "error",
+              );
+              return;
+            }
+            phone = phoneDigits;
+
+            // Validate email if provided
+            if (email && !Validator.isValidEmail(email)) {
+              showNotification("⚠️ صيغة البريد الإلكتروني غير صحيحة", "error");
+              return;
+            }
+          } catch (e) {
+            console.warn("Validation error in branch settings:", e);
             showNotification(
-              "⚠️ رقم واتساب الفرع غير صحيح. أدخل رقم مصري مثل 01012345678 أو 201012345678",
+              "❌ فشل التحقق من بيانات الفرع. حاول مرة أخرى.",
               "error",
             );
             return;
           }
-          phone = phoneDigits;
-
-          // Validate email if provided
-          if (email && !Validator.isValidEmail(email)) {
-            showNotification("⚠️ صيغة البريد الإلكتروني غير صحيحة", "error");
-            return;
+          let social = window.BRANCH_DATA.social || {};
+          if (socialRaw) {
+            try {
+              social = JSON.parse(socialRaw);
+            } catch (e) {
+              // try comma-separated
+              social = {};
+              socialRaw.split(",").forEach((s) => {
+                const k = s.trim();
+                if (k) social[k] = "";
+              });
+            }
           }
-        } catch (e) {
-          console.warn("Validation error in branch settings:", e);
-          showNotification(
-            "❌ فشل التحقق من بيانات الفرع. حاول مرة أخرى.",
-            "error",
-          );
-          return;
-        }
-        let social = window.BRANCH_DATA.social || {};
-        if (socialRaw) {
+
+          window.BRANCH_DATA.name = name;
+          window.BRANCH_DATA.phone = phone;
+          window.BRANCH_DATA.email = email;
+          window.BRANCH_DATA.logo = logo;
+          window.BRANCH_DATA.hours = hours;
+          window.BRANCH_DATA.description = desc;
+          window.BRANCH_DATA.social = social;
+
+          // update global RESTAURANT_PHONE and RESTAURANT_EMAIL for immediate effects
+          RESTAURANT_PHONE = phone;
+          RESTAURANT_EMAIL = email;
+
+          saveBranchData(window.BRANCH_DATA);
           try {
-            social = JSON.parse(socialRaw);
-          } catch (e) {
-            // try comma-separated
-            social = {};
-            socialRaw.split(",").forEach((s) => {
-              const k = s.trim();
-              if (k) social[k] = "";
-            });
-          }
-        }
+            localStorage.setItem(
+              "restaurantEmail",
+              window.BRANCH_DATA.email || "",
+            );
+          } catch (e) {}
+          try {
+            localStorage.setItem("restaurant_phone", phone || "");
+          } catch (e) {}
+          showNotification("✅ تم حفظ بيانات الفرع بنجاح", "success");
+          // refresh admin statistics & badge
+          updateAdminStatistics();
+          const badge = document.getElementById("adminRestaurantBadge");
+          if (badge)
+            badge.textContent = `أنت تعدل الآن منيو مطعم: ${window.BRANCH_DATA.name}`;
+          // Update contact links on the page immediately
+          try {
+            if (window.applyRestaurantToUI) window.applyRestaurantToUI();
+          } catch (e) {}
+        };
 
-        window.BRANCH_DATA.name = name;
-        window.BRANCH_DATA.phone = phone;
-        window.BRANCH_DATA.email = email;
-        window.BRANCH_DATA.logo = logo;
-        window.BRANCH_DATA.hours = hours;
-        window.BRANCH_DATA.description = desc;
-        window.BRANCH_DATA.social = social;
+        // Preview handler: save branch data and notify other windows via storage event
+        document.getElementById("previewBranchSettingsBtn").onclick =
+          function () {
+            try {
+              // reuse the same validation and save logic by invoking save handler
+              document.getElementById("saveBranchSettingsBtn").click();
+              // bump a preview key so other tabs/windows react via storage event
+              try {
+                const key = `branch_preview_${window.BRANCH_DATA && window.BRANCH_DATA.slug}`;
+                localStorage.setItem(key, Date.now().toString());
+              } catch (e) {}
+              showNotification(
+                "ℹ️ عرض التغييرات تم، سيتم تحديث البوابة تلقائياً",
+                "info",
+              );
+            } catch (e) {
+              console.warn("Preview failed", e);
+              showNotification("❌ فشل العرض الفوري", "error");
+            }
+          };
 
-        // update global RESTAURANT_PHONE and RESTAURANT_EMAIL for immediate effects
-        RESTAURANT_PHONE = phone;
-        RESTAURANT_EMAIL = email;
+        document.getElementById("resetBranchToMasterBtn").onclick =
+          function () {
+            if (
+              !confirm(
+                "⚠️ هل تريد تهيئة قائمة هذا الفرع إلى القائمة الافتراضية (سيحذف التعديلات المحلية)؟",
+              )
+            )
+              return;
+            window.BRANCH_DATA.menu = JSON.parse(
+              JSON.stringify(MASTER_MENU || defaultItems),
+            );
+            saveBranchData(window.BRANCH_DATA);
+            menuItems = JSON.parse(JSON.stringify(window.BRANCH_DATA.menu));
+            renderMenu(menuItems);
+            renderAdminList();
+            showNotification(
+              "✅ تم تهيئة قائمة الفرع إلى النسخة الافتراضية",
+              "success",
+            );
+          };
 
-        saveBranchData(window.BRANCH_DATA);
-        try {
-          localStorage.setItem(
-            "restaurantEmail",
-            window.BRANCH_DATA.email || "",
-          );
-        } catch (e) {}
-        try {
-          localStorage.setItem("restaurantPhone", phone || "");
-        } catch (e) {}
-        showNotification("✅ تم حفظ بيانات الفرع بنجاح", "success");
-        // refresh admin statistics & badge
-        updateAdminStatistics();
-        const badge = document.getElementById("adminRestaurantBadge");
-        if (badge)
-          badge.textContent = `أنت تعدل الآن منيو مطعم: ${window.BRANCH_DATA.name}`;
-        // Update contact links on the page immediately
-        try {
-          if (window.applyRestaurantToUI) window.applyRestaurantToUI();
-        } catch (e) {}
-      };
-
-      document.getElementById("resetBranchToMasterBtn").onclick = function () {
-        if (
-          !confirm(
-            "⚠️ هل تريد تهيئة قائمة هذا الفرع إلى القائمة الافتراضية (سيحذف التعديلات المحلية)؟",
-          )
-        )
-          return;
-        window.BRANCH_DATA.menu = JSON.parse(
-          JSON.stringify(MASTER_MENU || defaultItems),
-        );
-        saveBranchData(window.BRANCH_DATA);
-        menuItems = JSON.parse(JSON.stringify(window.BRANCH_DATA.menu));
-        renderMenu(menuItems);
-        renderAdminList();
-        showNotification(
-          "✅ تم تهيئة قائمة الفرع إلى النسخة الافتراضية",
-          "success",
-        );
-      };
-
-      // Render branch reports (orders + revenue)
-      renderBranchReports();
+        // Render branch reports (orders + revenue)
+        renderBranchReports();
+      }
     } catch (e) {
       console.warn("Failed to inject branch settings UI:", e);
     }
@@ -3868,6 +3944,34 @@ function exportMonthlyReport() {
         csv += `"${month}",${idx + 1},"${entry.name}","${entry.email}","${entry.phone}","${formattedDate}","${formattedTime}"\n`;
       });
     });
+
+  // Simple control API: update stored restaurant phone (used by admin panel)
+  function updatePhone(newNumber) {
+    try {
+      const val = String(newNumber || "").trim();
+      localStorage.setItem("restaurant_phone", val);
+      // update in-memory variable for immediate effect
+      RESTAURANT_PHONE = val || RESTAURANT_PHONE;
+      // update any visible contact link
+      try {
+        const waBtn = document.getElementById("contactWaButton");
+        if (waBtn) {
+          const waPhone =
+            (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
+            localStorage.getItem("restaurant_phone") ||
+            RESTAURANT_PHONE;
+          waBtn.href = `https://wa.me/${waPhone}`;
+        }
+      } catch (e) {}
+      console.log("✅ restaurant phone updated:", RESTAURANT_PHONE);
+      return true;
+    } catch (err) {
+      console.error("Failed to update restaurant phone:", err);
+      return false;
+    }
+  }
+
+  window.updatePhone = updatePhone;
 
   // إنشاء ملف وتحميله
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -5516,11 +5620,14 @@ function getRestaurantEmail() {
 function getRestaurantPhone() {
   return (
     (window.BRANCH_DATA && window.BRANCH_DATA.phone) ||
-    localStorage.getItem("restaurantPhone") ||
+    localStorage.getItem("restaurant_phone") ||
     (typeof RESTAURANT_PHONE !== "undefined" && RESTAURANT_PHONE) ||
     "201021279663"
   );
 }
+
+// Export to window for global use
+window.getRestaurantPhone = getRestaurantPhone;
 
 function formatPhoneForDisplay(phone) {
   if (!phone) return "";
@@ -6074,7 +6181,7 @@ function checkStorageStatus() {
       data: null,
     },
     "رقم المطعم (Phone)": {
-      key: "restaurantPhone",
+      key: "restaurant_phone",
       count: 0,
       status: "❌",
       data: null,
@@ -6133,7 +6240,7 @@ function checkStorageStatus() {
       myOrders: localStorage.getItem("myOrders"),
       customers: localStorage.getItem("customers"),
       myReviews: localStorage.getItem("myReviews"),
-      restaurantPhone: localStorage.getItem("restaurantPhone"),
+      restaurant_phone: localStorage.getItem("restaurant_phone"),
     };
 
     let totalSize = 0;
@@ -6222,7 +6329,7 @@ function verifyDataUpdate() {
   }
 
   // فحص رقم المطعم
-  const phone = localStorage.getItem("restaurantPhone");
+  const phone = localStorage.getItem("restaurant_phone");
   console.log(`\n📱 رقم المطعم: ${phone || "غير محفوظ"}`);
 
   // فحص التقييمات
